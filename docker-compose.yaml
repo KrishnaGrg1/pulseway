@@ -1,0 +1,12 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    # This loads the .env file from your local directory into the container's environment
+    env_file:
+      - .env
+    # Optional: If you want to overwrite specific variables for this container
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
