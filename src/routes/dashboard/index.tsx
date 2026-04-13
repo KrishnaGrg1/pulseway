@@ -6,6 +6,7 @@ import {
   getDashboardStats,
   createMonitor,
   deleteMonitor,
+  updateMonitor,
 } from "#/lib/queries";
 import { logout, isAuthenticated } from "#/lib/auth";
 import type { Monitor } from "#/lib/types";
@@ -23,7 +24,7 @@ function DashboardPage() {
   const [url, setUrl] = useState("");
   const [interval, setInterval] = useState(60);
   const [liveStatuses, setLiveStatuses] = useState<Record<number, string>>({});
-
+  const [editingMonitorId, setEditingMonitorId] = useState<number | null>(null);
   // Redirect if not authenticated
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -85,6 +86,18 @@ function DashboardPage() {
     },
   });
 
+  const updateMutation = useMutation({
+    mutationFn: ({ id }: { id: number }) =>
+      updateMonitor(id, { name, url, interval_secs: interval }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["monitors"] });
+      queryClient.invalidateQueries({ queryKey: ["stats"] });
+      setEditingMonitorId(null);
+      setName("");
+      setUrl("");
+      setInterval(60);
+    },
+  });
   const deleteMutation = useMutation({
     mutationFn: (id: number) => deleteMonitor(id),
     onSuccess: () => {
@@ -330,78 +343,169 @@ function DashboardPage() {
             {monitors?.map((monitor) => {
               const status = getStatus(monitor);
               return (
-                <div
-                  key={monitor.id}
-                  className={`monitor-row ${status === "down" ? "is-down" : ""}`}
-                >
-                  <span
-                    className={`badge ${status === "up" ? "badge-up" : status === "down" ? "badge-down" : "badge-pend"}`}
+                <div key={monitor.id}>
+                  <div
+                    className={`monitor-row ${status === "down" ? "is-down" : ""}`}
                   >
-                    {status === "up"
-                      ? "UP"
-                      : status === "down"
-                        ? "DOWN"
-                        : "PENDING"}
-                  </span>
-
-                  <div style={{ flex: "0 0 180px" }}>
-                    <p
-                      style={{
-                        fontFamily: "var(--font-mono)",
-                        fontSize: "13px",
-                        fontWeight: 600,
-                        color: "var(--text-1)",
-                        margin: 0,
-                      }}
+                    <span
+                      className={`badge ${status === "up" ? "badge-up" : status === "down" ? "badge-down" : "badge-pend"}`}
                     >
-                      {monitor.name}
-                    </p>
-                    <p
-                      style={{
-                        fontFamily: "var(--font-mono)",
-                        fontSize: "11px",
-                        color: "var(--text-3)",
-                        margin: 0,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {monitor.url}
-                    </p>
-                  </div>
+                      {status === "up"
+                        ? "UP"
+                        : status === "down"
+                          ? "DOWN"
+                          : "PENDING"}
+                    </span>
 
-                  {/* Heartbeat visualization */}
-                  <div className="heartbeat" style={{ flex: 1 }}>
-                    {Array.from({ length: 30 }).map((_, i) => (
-                      <div
-                        key={i}
-                        className={`hb-seg ${status === "down" && i > 22 ? "down" : status !== "pending" ? "up" : ""}`}
+                    <div style={{ flex: "0 0 180px" }}>
+                      <p
                         style={{
-                          height: `${8 + Math.sin(i * 0.8) * 4 + Math.random() * 3}px`,
+                          fontFamily: "var(--font-mono)",
+                          fontSize: "13px",
+                          fontWeight: 600,
+                          color: "var(--text-1)",
+                          margin: 0,
                         }}
-                      />
-                    ))}
+                      >
+                        {monitor.name}
+                      </p>
+                      <p
+                        style={{
+                          fontFamily: "var(--font-mono)",
+                          fontSize: "11px",
+                          color: "var(--text-3)",
+                          margin: 0,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {monitor.url}
+                      </p>
+                    </div>
+
+                    {/* Heartbeat visualization */}
+                    <div className="heartbeat" style={{ flex: 1 }}>
+                      {Array.from({ length: 30 }).map((_, i) => (
+                        <div
+                          key={i}
+                          className={`hb-seg ${status === "down" && i > 22 ? "down" : status !== "pending" ? "up" : ""}`}
+                          style={{
+                            height: `${8 + Math.sin(i * 0.8) * 4 + Math.random() * 3}px`,
+                          }}
+                        />
+                      ))}
+                    </div>
+
+                    <span
+                      style={{
+                        fontFamily: "var(--font-mono)",
+                        fontSize: "12px",
+                        color: "var(--text-2)",
+                        flexShrink: 0,
+                      }}
+                    >
+                      every {monitor.interval_secs}s
+                    </span>
+                    <button
+                      className="btn btn-sm"
+                      onClick={() => {
+                        setEditingMonitorId(monitor.id);
+                        setName(monitor.name);
+                        setUrl(monitor.url);
+                        setInterval(monitor.interval_secs);
+                      }}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="btn btn-danger btn-sm"
+                      onClick={() => deleteMutation.mutate(monitor.id)}
+                      disabled={deleteMutation.isPending}
+                    >
+                      Delete
+                    </button>
                   </div>
-
-                  <span
-                    style={{
-                      fontFamily: "var(--font-mono)",
-                      fontSize: "12px",
-                      color: "var(--text-2)",
-                      flexShrink: 0,
-                    }}
-                  >
-                    every {monitor.interval_secs}s
-                  </span>
-
-                  <button
-                    className="btn btn-danger btn-sm"
-                    onClick={() => deleteMutation.mutate(monitor.id)}
-                    disabled={deleteMutation.isPending}
-                  >
-                    Delete
-                  </button>
+                  {editingMonitorId === monitor.id && (
+                    <div
+                      className="card fade-in"
+                      style={{ padding: "24px", marginBottom: "24px" }}
+                    >
+                      <p
+                        style={{
+                          fontFamily: "var(--font-mono)",
+                          fontSize: "12px",
+                          fontWeight: 700,
+                          letterSpacing: "0.12em",
+                          textTransform: "uppercase",
+                          color: "var(--text-3)",
+                          marginBottom: "16px",
+                        }}
+                      >
+                        Update monitor
+                      </p>
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "1fr 2fr auto",
+                          gap: "12px",
+                          alignItems: "flex-end",
+                        }}
+                      >
+                        <div>
+                          <label className="field-label">Name</label>
+                          <input
+                            className="field"
+                            value={name}
+                            placeholder="Main API"
+                            onChange={(e) => setName(e.target.value)}
+                          />
+                        </div>
+                        <div>
+                          <label className="field-label">URL</label>
+                          <input
+                            className="field"
+                            value={url}
+                            placeholder="https://api.example.com/health"
+                            onChange={(e) => setUrl(e.target.value)}
+                          />
+                        </div>
+                        <div>
+                          <label className="field-label">Interval (s)</label>
+                          <input
+                            className="field"
+                            type="number"
+                            value={interval}
+                            placeholder="60"
+                            style={{ width: "90px" }}
+                            onChange={(e) =>
+                              setInterval(Number(e.target.value))
+                            }
+                          />
+                        </div>
+                      </div>
+                      <button
+                        className="btn btn-primary btn-sm"
+                        style={{ marginTop: "16px" }}
+                        onClick={() =>
+                          updateMutation.mutate({
+                            id: Number(editingMonitorId),
+                          })
+                        }
+                        disabled={updateMutation.isPending || !name || !url}
+                      >
+                        {createMutation.isPending
+                          ? "Updating…"
+                          : "Update monitor"}
+                      </button>
+                      <button
+                        className="btn btn-sm"
+                        onClick={() => setEditingMonitorId(null)}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
                 </div>
               );
             })}

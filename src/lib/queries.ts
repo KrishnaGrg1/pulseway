@@ -30,7 +30,14 @@ export const createMonitor = async (data: {
 export const deleteMonitor = async (id: number): Promise<void> => {
   await api.delete(`/monitors/${id}`)
 }
-
+export const updateMonitor = async (id: number, data: {
+  name: string
+  url: string
+  interval_secs: number
+}): Promise<Monitor> => {
+  const res = await api.put(`/monitors/${id}`, data)
+  return res.data.data
+}
 // Check results
 export const getCheckResults = async (monitorId: number): Promise<CheckResult[]> => {
   const res = await api.get(`/monitors/${monitorId}/results`)
