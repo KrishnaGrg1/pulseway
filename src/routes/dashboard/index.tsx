@@ -9,11 +9,7 @@ import {
 } from "#/lib/queries";
 import { logout, isAuthenticated } from "#/lib/auth";
 import type { Monitor } from "#/lib/types";
-import { Button } from "#/components/ui/button";
-import { Input } from "#/components/ui/input";
-import { Label } from "#/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
-import { Badge } from "#/components/ui/badge";
+import Logo from "#/components/Logo";
 
 export const Route = createFileRoute("/dashboard/")({
   component: DashboardPage,
@@ -102,175 +98,316 @@ function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="border-b">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-xl font-semibold">Pulseway</h1>
-          <Button variant="outline" onClick={logout}>
-            Logout
-          </Button>
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "var(--sidebar-w) 1fr",
+        minHeight: "100dvh",
+      }}
+    >
+      {/* Sidebar */}
+      <aside className="app-sidebar">
+        <div className="app-sidebar-header">
+          <Logo />
         </div>
-      </div>
+        <div className="sidebar-body">
+          <span className="sidebar-section-label">Navigation</span>
+          <div className="sidebar-link active">Overview</div>
+          <div className="sidebar-link" style={{ opacity: 0.5 }}>
+            Incidents
+          </div>
+          <div className="sidebar-link" style={{ opacity: 0.5 }}>
+            Settings
+          </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
-        {/* Stats */}
-        {stats && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-muted-foreground">
-                  Total Monitors
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-3xl font-bold">{stats.total_monitors}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-muted-foreground">
-                  Active
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-3xl font-bold">{stats.active_monitors}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-muted-foreground">
-                  Uptime (24h)
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-3xl font-bold">
-                  {stats.uptime_percentage?.toFixed(1)}%
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-muted-foreground">
-                  Avg Latency
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-3xl font-bold">
-                  {stats.avg_latency_ms?.toFixed(0)}ms
-                </p>
-              </CardContent>
-            </Card>
+          <span className="sidebar-section-label" style={{ marginTop: "20px" }}>
+            Monitors
+          </span>
+          {monitors?.map((m) => {
+            const s = getStatus(m);
+            return (
+              <div
+                key={m.id}
+                className="sidebar-link"
+                style={{ fontSize: "12px" }}
+              >
+                <div
+                  className={`sidebar-monitor-dot ${s === "up" ? "dot-up" : s === "down" ? "dot-down" : "dot-pend"}`}
+                />
+                <span
+                  style={{
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {m.name}
+                </span>
+              </div>
+            );
+          })}
+
+          <div
+            style={{
+              marginTop: "auto",
+              paddingTop: "24px",
+              borderTop: "1px solid var(--line)",
+            }}
+          >
+            <button
+              className="sidebar-link"
+              style={{ width: "100%", color: "var(--text-3)" }}
+              onClick={logout}
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      {/* Main content */}
+      <main className="app-main">
+        {/* Page header */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            marginBottom: "28px",
+          }}
+        >
+          <div>
+            <h1 className="page-title">Overview</h1>
+            <p className="page-sub">All monitors · live via SSE</p>
+          </div>
+          <button
+            className="btn btn-primary btn-sm"
+            onClick={() => setShowForm(!showForm)}
+          >
+            {showForm ? "Cancel" : "+ Add monitor"}
+          </button>
+        </div>
+
+        {/* Add monitor form */}
+        {showForm && (
+          <div
+            className="card fade-in"
+            style={{ padding: "24px", marginBottom: "24px" }}
+          >
+            <p
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: "12px",
+                fontWeight: 700,
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+                color: "var(--text-3)",
+                marginBottom: "16px",
+              }}
+            >
+              New monitor
+            </p>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 2fr auto",
+                gap: "12px",
+                alignItems: "flex-end",
+              }}
+            >
+              <div>
+                <label className="field-label">Name</label>
+                <input
+                  className="field"
+                  value={name}
+                  placeholder="Main API"
+                  onChange={(e) => setName(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="field-label">URL</label>
+                <input
+                  className="field"
+                  value={url}
+                  placeholder="https://api.example.com/health"
+                  onChange={(e) => setUrl(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="field-label">Interval (s)</label>
+                <input
+                  className="field"
+                  type="number"
+                  value={interval}
+                  placeholder="60"
+                  style={{ width: "90px" }}
+                  onChange={(e) => setInterval(Number(e.target.value))}
+                />
+              </div>
+            </div>
+            <button
+              className="btn btn-primary btn-sm"
+              style={{ marginTop: "16px" }}
+              onClick={() => createMutation.mutate()}
+              disabled={createMutation.isPending || !name || !url}
+            >
+              {createMutation.isPending ? "Creating…" : "Create monitor"}
+            </button>
           </div>
         )}
 
-        {/* Monitors */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Monitors</h2>
-            <Button onClick={() => setShowForm(!showForm)}>
-              {showForm ? "Cancel" : "Add Monitor"}
-            </Button>
-          </div>
-
-          {/* Add monitor form */}
-          {showForm && (
-            <Card>
-              <CardContent className="pt-6 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label>Name</Label>
-                    <Input
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="My API"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>URL</Label>
-                    <Input
-                      value={url}
-                      onChange={(e) => setUrl(e.target.value)}
-                      placeholder="https://api.example.com/health"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Interval (seconds)</Label>
-                    <Input
-                      type="number"
-                      value={interval}
-                      onChange={(e) => setInterval(Number(e.target.value))}
-                      placeholder="60"
-                    />
-                  </div>
-                </div>
-                <Button
-                  onClick={() => createMutation.mutate()}
-                  disabled={createMutation.isPending || !name || !url}
+        {/* Stats row */}
+        {stats && (
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(4, 1fr)",
+              gap: "12px",
+              marginBottom: "28px",
+            }}
+          >
+            {[
+              { label: "Total monitors", value: stats.total_monitors },
+              { label: "Active now", value: stats.active_monitors },
+              {
+                label: "Uptime 24h",
+                value: `${stats.uptime_percentage?.toFixed(1)}%`,
+                accent: true,
+              },
+              {
+                label: "Avg latency",
+                value: `${stats.avg_latency_ms?.toFixed(0)}ms`,
+              },
+            ].map((s) => (
+              <div key={s.label} className="stat-tile">
+                <div className="stat-tile-label">{s.label}</div>
+                <div
+                  className="stat-tile-value"
+                  style={s.accent ? { color: "var(--lagoon-deep)" } : {}}
                 >
-                  {createMutation.isPending ? "Creating..." : "Create Monitor"}
-                </Button>
-              </CardContent>
-            </Card>
-          )}
+                  {s.value}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
-          {/* Monitor list */}
-          {monitorsLoading ? (
-            <p className="text-muted-foreground">Loading...</p>
-          ) : monitors?.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center text-muted-foreground">
-                No monitors yet. Add one to get started.
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-3">
-              {monitors?.map((monitor) => (
-                <Card key={monitor.id}>
-                  <CardContent className="py-4 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <Badge
-                        variant={
-                          getStatus(monitor) === "up"
-                            ? "default"
-                            : getStatus(monitor) === "down"
-                              ? "destructive"
-                              : "secondary"
-                        }
-                      >
-                        {getStatus(monitor) === "up"
-                          ? "● UP"
-                          : getStatus(monitor) === "down"
-                            ? "● DOWN"
-                            : "○ PENDING"}
-                      </Badge>
-                      <div>
-                        <p className="font-medium">{monitor.name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {monitor.url}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <p className="text-sm text-muted-foreground">
-                        every {monitor.interval_secs}s
-                      </p>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => deleteMutation.mutate(monitor.id)}
-                        disabled={deleteMutation.isPending}
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+        {/* Monitor list */}
+        {monitorsLoading ? (
+          <p
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: "13px",
+              color: "var(--text-3)",
+            }}
+          >
+            Loading monitors…
+          </p>
+        ) : monitors?.length === 0 ? (
+          <div
+            className="card"
+            style={{ padding: "56px", textAlign: "center" }}
+          >
+            <p
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: "13px",
+                color: "var(--text-3)",
+                marginBottom: "16px",
+              }}
+            >
+              No monitors yet.
+            </p>
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={() => setShowForm(true)}
+            >
+              Add your first monitor
+            </button>
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            {monitors?.map((monitor) => {
+              const status = getStatus(monitor);
+              return (
+                <div
+                  key={monitor.id}
+                  className={`monitor-row ${status === "down" ? "is-down" : ""}`}
+                >
+                  <span
+                    className={`badge ${status === "up" ? "badge-up" : status === "down" ? "badge-down" : "badge-pend"}`}
+                  >
+                    {status === "up"
+                      ? "UP"
+                      : status === "down"
+                        ? "DOWN"
+                        : "PENDING"}
+                  </span>
+
+                  <div style={{ flex: "0 0 180px" }}>
+                    <p
+                      style={{
+                        fontFamily: "var(--font-mono)",
+                        fontSize: "13px",
+                        fontWeight: 600,
+                        color: "var(--text-1)",
+                        margin: 0,
+                      }}
+                    >
+                      {monitor.name}
+                    </p>
+                    <p
+                      style={{
+                        fontFamily: "var(--font-mono)",
+                        fontSize: "11px",
+                        color: "var(--text-3)",
+                        margin: 0,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {monitor.url}
+                    </p>
+                  </div>
+
+                  {/* Heartbeat visualization */}
+                  <div className="heartbeat" style={{ flex: 1 }}>
+                    {Array.from({ length: 30 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className={`hb-seg ${status === "down" && i > 22 ? "down" : status !== "pending" ? "up" : ""}`}
+                        style={{
+                          height: `${8 + Math.sin(i * 0.8) * 4 + Math.random() * 3}px`,
+                        }}
+                      />
+                    ))}
+                  </div>
+
+                  <span
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: "12px",
+                      color: "var(--text-2)",
+                      flexShrink: 0,
+                    }}
+                  >
+                    every {monitor.interval_secs}s
+                  </span>
+
+                  <button
+                    className="btn btn-danger btn-sm"
+                    onClick={() => deleteMutation.mutate(monitor.id)}
+                    disabled={deleteMutation.isPending}
+                  >
+                    Delete
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </main>
     </div>
   );
 }

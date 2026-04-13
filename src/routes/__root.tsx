@@ -26,13 +26,31 @@ export const Route = createRootRoute({
         content: "width=device-width, initial-scale=1",
       },
       {
-        title: "TanStack Start Starter",
+        title: "Pulseway",
+      },
+      {
+        name: "description",
+        content:
+          "Monitor your APIs and get instant alerts when something breaks.",
+      },
+      {
+        name: "theme-color",
+        content: "#0f0f0f",
       },
     ],
     links: [
       {
         rel: "stylesheet",
         href: appCss,
+      },
+      {
+        rel: "icon",
+        href: "/pulsewayfavicon.svg",
+        type: "image/svg+xml",
+      },
+      {
+        rel: "manifest",
+        href: "/manifest.json",
       },
     ],
   }),

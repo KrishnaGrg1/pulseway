@@ -1,25 +1,26 @@
 {
-  "short_name": "TanStack App",
-  "name": "Create TanStack App Sample",
+  "short_name": "Pulseway",
+  "name": "Pulseway — API Uptime Monitor",
+  "description": "Monitor your APIs and get instant alerts when something breaks.",
   "icons": [
     {
-      "src": "favicon.ico",
+      "src": "pulsewayfavicon.svg",
       "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
+      "type": "image/svg+xml"
     },
     {
-      "src": "logo192.png",
-      "type": "image/png",
+      "src": "pulseway192.svg",
+      "type": "image/svg+xml",
       "sizes": "192x192"
     },
     {
-      "src": "logo512.png",
-      "type": "image/png",
+      "src": "pulseway512.svg",
+      "type": "image/svg+xml",
       "sizes": "512x512"
     }
   ],
-  "start_url": ".",
+  "start_url": "/",
   "display": "standalone",
-  "theme_color": "#000000",
+  "theme_color": "#0f0f0f",
   "background_color": "#ffffff"
 }

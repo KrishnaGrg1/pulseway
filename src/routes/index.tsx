@@ -1,316 +1,384 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Button } from "#/components/ui/button";
-import { Badge } from "#/components/ui/badge";
-import { Card, CardContent } from "#/components/ui/card";
+import Logo from "#/components/Logo";
 import LiveDemo from "#/components/LiveDemo";
 
-export const Route = createFileRoute("/")({
-  component: HomePage,
-});
+export const Route = createFileRoute("/")({ component: HomePage });
 
-function HomePage() {
-  const navigate = useNavigate();
-  const [latency, setLatency] = useState(124);
+const FEATURES = [
+  {
+    title: "30-second checks",
+    desc: "Every endpoint is pinged every 30 seconds using Go workers. Catch outages before your users notice them — not after.",
+    large: true,
+    icon: "⏱️",
+  },
+  {
+    title: "Instant email alerts",
+    desc: "First failure fires an email. Recovery closes the incident automatically — no manual work.",
+    icon: "📧",
+  },
+  {
+    title: "Latency trends",
+    desc: "Every check records response time. Spot degradation before it turns into an outage.",
+    icon: "📊",
+  },
+  {
+    title: "Live via SSE",
+    desc: "Results stream to your dashboard in real time. No polling, no page refresh needed.",
+    icon: "⚡",
+  },
+  {
+    title: "Incident history",
+    desc: "Full log of every incident — started, resolved, duration. Always know what happened.",
+    icon: "📜",
+  },
+];
+
+const HOW_IT_WORKS = [
+  {
+    step: "01",
+    title: "Register a monitor",
+    desc: "Add any URL. Set interval — 30s, 60s, or 5 minutes.",
+  },
+  {
+    step: "02",
+    title: "We check it",
+    desc: "Go workers send HTTP requests on schedule and stream results via SSE.",
+  },
+  {
+    step: "03",
+    title: "You get alerted",
+    desc: "Failures trigger incidents + email alerts automatically.",
+  },
+];
+
+function LatencyBar() {
+  const [bars, setBars] = useState(() =>
+    Array.from({ length: 12 }, () => ({
+      h: 12 + Math.random() * 20,
+      up: true,
+    })),
+  );
 
   useEffect(() => {
-    const latencies = [98, 45, 201, 67, 134, 89, 156];
-    let i = 0;
-    const interval = setInterval(() => {
-      i++;
-      setLatency(latencies[i % latencies.length]);
-    }, 2000);
-    return () => clearInterval(interval);
+    const t = setInterval(() => {
+      setBars((prev) => {
+        const next = [...prev.slice(1)];
+        next.push({
+          h: 8 + Math.random() * 24,
+          up: Math.random() > 0.15,
+        });
+        return next;
+      });
+    }, 1800);
+
+    return () => clearInterval(t);
   }, []);
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Nav */}
-      <nav className="flex items-center justify-between px-8 py-4 border-b">
-        <span className="text-base font-medium">Pulseway</span>
-        <div className="flex items-center gap-6">
-          <a
-            href="#features"
-            className="text-sm text-muted-foreground hover:text-foreground"
-          >
-            Features
-          </a>
-          <a
-            href="#pricing"
-            className="text-sm text-muted-foreground hover:text-foreground"
-          >
-            Pricing
-          </a>
-          <a
-            href="#"
-            className="text-sm text-muted-foreground hover:text-foreground"
-          >
-            Docs
-          </a>
-          <Button size="sm" onClick={() => navigate({ to: "/register" })}>
-            Get started
-          </Button>
-        </div>
-      </nav>
+    <div className="mt-5 rounded-lg border border-[var(--line)] bg-[var(--surface-0)] p-4">
+      <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-[var(--text-3)]">
+        Latency · last 12 checks
+      </p>
 
-      {/* Hero */}
-      <section className="text-center py-24 px-4 max-w-3xl mx-auto">
-        <div className="inline-block bg-secondary border text-xs text-muted-foreground px-4 py-1 rounded-full mb-6">
-          Built with Go — 10k monitors on a $12 server
-        </div>
-        <h1 className="text-5xl font-medium leading-tight mb-5">
-          Know when your APIs go down
-          <br />
-          before your users do
-        </h1>
-        <p className="text-lg text-muted-foreground max-w-md mx-auto mb-8 leading-relaxed">
-          Pulseway monitors your endpoints every 30 seconds and alerts you
-          instantly when something breaks.
-        </p>
-        <div className="flex gap-3 justify-center flex-wrap">
-          <Button size="lg" onClick={() => navigate({ to: "/register" })}>
-            Start monitoring free
-          </Button>
-          <Button
-            size="lg"
-            variant="outline"
-            onClick={() => navigate({ to: "/login" })}
-          >
-            Sign in
-          </Button>
-        </div>
-      </section>
+      <div className="flex h-10 items-end gap-1">
+        {bars.map((b, i) => (
+          <div
+            key={i}
+            className="flex-1 rounded-sm transition-all duration-700 ease-out"
+            style={{
+              height: `${b.h}px`,
+              background: b.up ? "var(--lagoon)" : "var(--danger)",
+              opacity: 0.7 + i * 0.02,
+            }}
+          />
+        ))}
+      </div>
 
-      {/* Live Demo */}
-      <section className="max-w-4xl mx-auto px-4 mb-24">
-        <div className="border rounded-xl overflow-hidden">
-          {/* Browser bar */}
-          <div className="bg-secondary px-4 py-2 border-b flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-border" />
-            <div className="w-3 h-3 rounded-full bg-border" />
-            <div className="w-3 h-3 rounded-full bg-border" />
-            <span className="text-xs text-muted-foreground ml-2">
-              app.pulseway.tech/dashboard
-            </span>
+      <div className="mt-2 flex justify-between text-[9px] font-mono text-[var(--text-3)]">
+        <span>−6 min</span>
+        <span>now</span>
+      </div>
+    </div>
+  );
+}
+
+function HomePage() {
+  const navigate = useNavigate();
+  const [latency, setLatency] = useState(67);
+
+  useEffect(() => {
+    const values = [45, 89, 67, 120, 54, 98, 71, 43];
+    let i = 0;
+
+    const t = setInterval(() => {
+      i++;
+      setLatency(values[i % values.length]);
+    }, 2200);
+
+    return () => clearInterval(t);
+  }, []);
+
+  return (
+    <div className="flex min-h-screen flex-col bg-[var(--bg)]">
+      {/* ───── NAV ───── */}
+      <header className="border-b border-[var(--line)]">
+        <div className="content-wrap flex items-center justify-between py-4">
+          <Logo />
+
+          <nav className="flex items-center gap-6">
+            <a href="#features" className="nav-link">
+              Features
+            </a>
+            <a href="#how-it-works" className="nav-link">
+              How it works
+            </a>
+
+            <button
+              onClick={() => navigate({ to: "/login" })}
+              className="btn btn-secondary btn-sm"
+            >
+              Login
+            </button>
+
+            <button
+              onClick={() => navigate({ to: "/register" })}
+              className="btn btn-primary btn-sm"
+            >
+              Get started
+            </button>
+          </nav>
+        </div>
+      </header>
+
+      {/* ───── HERO ───── */}
+      <section className="content-wrap py-24">
+        <div className="grid items-center gap-12 lg:grid-cols-2">
+          {/* LEFT */}
+          <div>
+            <p className="text-xs uppercase tracking-[0.25em] text-[var(--text-3)]">
+              Uptime monitoring
+            </p>
+
+            <h1 className="mt-3 text-4xl font-bold leading-tight md:text-5xl">
+              Know when your APIs
+              <br />
+              go down <span className="text-[var(--lagoon)]">before</span>
+              <br />
+              your users do
+            </h1>
+
+            <p className="mt-4 max-w-lg text-[var(--text-2)]">
+              30-second checks, instant alerts, and real-time latency tracking
+              built for developers.
+            </p>
+
+            <div className="mt-6 flex gap-3">
+              <button
+                className="btn btn-primary btn-lg"
+                onClick={() => navigate({ to: "/register" })}
+              >
+                Start free
+              </button>
+
+              <button
+                className="btn btn-secondary btn-lg"
+                onClick={() => navigate({ to: "/login" })}
+              >
+                Login
+              </button>
+            </div>
+
+            {/* social proof */}
+            <div className="mt-6 flex items-center gap-3">
+              <div className="flex">
+                {["JR", "KL", "MR", "AP"].map((init, i) => (
+                  <div
+                    key={init}
+                    className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-[var(--bg)] font-mono text-[9px] font-bold text-white"
+                    style={{
+                      background: `hsl(${170 + i * 20}, 40%, ${45 + i * 5}%)`,
+                      marginLeft: i === 0 ? 0 : "-8px",
+                    }}
+                  >
+                    {init}
+                  </div>
+                ))}
+              </div>
+
+              <p className="text-xs text-[var(--text-2)]">
+                <strong className="text-[var(--text-1)]">
+                  240+ developers
+                </strong>{" "}
+                using Pulseway
+              </p>
+            </div>
           </div>
-          {/* Dashboard preview */}
-          <div className="p-6 bg-background">
-            {/* Stats */}
 
-            <div className="grid grid-cols-4 gap-3 mb-6">
+          {/* RIGHT */}
+          <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-0)] p-5">
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-[var(--line)]" />
+              <div className="h-2 w-2 rounded-full bg-[var(--line)]" />
+              <div className="h-2 w-2 rounded-full bg-[var(--line)]" />
+              <span className="ml-2 font-mono text-[11px] text-[var(--text-3)]">
+                dashboard.pulseway
+              </span>
+            </div>
+
+            <div className="mt-4 grid grid-cols-3 gap-2">
               {[
-                { label: "Total monitors", value: "4" },
-                { label: "Active", value: "4" },
-                { label: "Uptime (24h)", value: "99.8%" },
-                { label: "Avg latency", value: `${latency}ms` },
-              ].map((stat) => (
-                <div key={stat.label} className="bg-secondary rounded-lg p-4">
-                  <p className="text-xs text-muted-foreground mb-1">
-                    {stat.label}
-                  </p>
-                  <p className="text-2xl font-medium">{stat.value}</p>
+                { label: "Monitors", value: "4" },
+                { label: "Uptime", value: "99.8%" },
+                { label: "Latency", value: `${latency}ms` },
+              ].map((s) => (
+                <div
+                  key={s.label}
+                  className="rounded-lg border border-[var(--line)] p-3"
+                >
+                  <div className="text-[10px] text-[var(--text-3)]">
+                    {s.label}
+                  </div>
+                  <div className="text-lg font-semibold">{s.value}</div>
                 </div>
               ))}
             </div>
-            <LiveDemo />
-            {/* Monitor rows */}
-            <div className="flex items-center justify-between px-4 py-3 border rounded-lg opacity-40">
-              <div className="flex items-center gap-3">
-                <Badge variant="default" className="text-xs">
-                  ● UP
-                </Badge>
-                <div>
-                  <p className="text-sm font-medium">Auth Service</p>
-                  <p className="text-xs text-muted-foreground">
-                    https://auth.yourapp.com/ping
-                  </p>
+
+            <div className="mt-3">
+              <LiveDemo />
+              {[
+                {
+                  name: "Auth service",
+                  url: "https://auth.yourapp.com/ping",
+                  up: true,
+                  lat: "45ms",
+                },
+                {
+                  name: "Payment webhook",
+                  url: "https://pay.yourapp.com/health",
+                  up: false,
+                  lat: "timeout",
+                },
+              ].map((m) => (
+                <div
+                  key={m.name}
+                  className={`mt-2 flex items-center gap-3 rounded-md border border-[var(--line)] px-3 py-2 ${
+                    !m.up ? "opacity-60" : "opacity-45"
+                  }`}
+                >
+                  {/* STATUS BADGE */}
+                  <span
+                    className={`rounded px-2 py-0.5 font-mono text-[10px] font-bold ${
+                      m.up
+                        ? "bg-[var(--lagoon)] text-black"
+                        : "bg-[var(--danger)] text-white"
+                    }`}
+                  >
+                    {m.up ? "UP" : "DOWN"}
+                  </span>
+
+                  {/* NAME + URL */}
+                  <div className="flex-1">
+                    <p className="m-0 font-mono text-[12px] font-semibold text-[var(--text-1)]">
+                      {m.name}
+                    </p>
+                    <p className="m-0 font-mono text-[10px] text-[var(--text-3)]">
+                      {m.url}
+                    </p>
+                  </div>
+
+                  {/* LATENCY */}
+                  <span
+                    className={`font-mono text-[11px] ${
+                      m.up ? "text-[var(--text-2)]" : "text-[var(--danger)]"
+                    }`}
+                  >
+                    {m.lat}
+                  </span>
                 </div>
-              </div>
-              <span className="text-xs text-muted-foreground">
-                45ms · every 60s
-              </span>
-            </div>
-            <div className="flex items-center justify-between px-4 py-3 border rounded-lg opacity-40">
-              <div className="flex items-center gap-3">
-                <Badge variant="destructive" className="text-xs">
-                  ● DOWN
-                </Badge>
-                <div>
-                  <p className="text-sm font-medium">Payment Webhook</p>
-                  <p className="text-xs text-muted-foreground">
-                    https://pay.yourapp.com/health
-                  </p>
-                </div>
-              </div>
-              <span className="text-xs text-muted-foreground">
-                timeout · every 30s
-              </span>
+              ))}
             </div>
           </div>
         </div>
       </section>
 
-      {/* Features */}
-      <section id="features" className="max-w-4xl mx-auto px-4 mb-24">
-        <p className="text-sm text-muted-foreground text-center mb-3">
-          Features
-        </p>
-        <h2 className="text-3xl font-medium text-center mb-3">
-          Everything you need to stay online
-        </h2>
-        <p className="text-base text-muted-foreground text-center max-w-md mx-auto mb-12">
-          Built for developers who care about reliability.
-        </p>
-        <div className="grid grid-cols-3 gap-4">
-          {[
-            {
-              icon: "⚡",
-              title: "30-second checks",
-              desc: "Your endpoints are checked every 30 seconds. Catch outages in under a minute.",
-            },
-            {
-              icon: "🔔",
-              title: "Instant alerts",
-              desc: "Get notified via email the moment a monitor goes down. Recovery alerts too.",
-            },
-            {
-              icon: "📡",
-              title: "Live dashboard",
-              desc: "Real-time status updates via SSE. Dashboard updates as checks come in.",
-            },
-            {
-              icon: "📈",
-              title: "Latency tracking",
-              desc: "Track response times over 24 hours. Spot degradation before outages.",
-            },
-            {
-              icon: "🔁",
-              title: "Incident history",
-              desc: "Full log of every incident — when it started, resolved, how long it lasted.",
-            },
-            {
-              icon: "🔐",
-              title: "Secure by default",
-              desc: "JWT auth, bcrypt passwords, HTTPS everywhere. Your data stays private.",
-            },
-          ].map((f) => (
-            <Card key={f.title}>
-              <CardContent className="pt-5">
-                <div className="w-8 h-8 rounded-md bg-secondary border flex items-center justify-center text-base mb-4">
-                  {f.icon}
-                </div>
-                <h3 className="text-sm font-medium mb-2">{f.title}</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  {f.desc}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
+      {/* ───── FEATURES ───── */}
+      <section id="features" className="content-wrap py-20">
+        <h2 className="mb-8 text-3xl font-bold">Everything you need</h2>
 
-      {/* Pricing */}
-      <section id="pricing" className="max-w-4xl mx-auto px-4 mb-24">
-        <p className="text-sm text-muted-foreground text-center mb-3">
-          Pricing
-        </p>
-        <h2 className="text-3xl font-medium text-center mb-3">
-          Simple, honest pricing
-        </h2>
-        <p className="text-base text-muted-foreground text-center max-w-md mx-auto mb-12">
-          No hidden fees. Cancel anytime.
-        </p>
-        <div className="grid grid-cols-3 gap-4">
-          {[
-            {
-              name: "Hobby",
-              price: "$0",
-              desc: "For personal projects and side hustles.",
-              featured: false,
-              features: [
-                "5 monitors",
-                "5-minute checks",
-                "Email alerts",
-                "7-day history",
-              ],
-              cta: "Get started",
-            },
-            {
-              name: "Pro",
-              price: "$12",
-              desc: "For teams that cannot afford downtime.",
-              featured: true,
-              features: [
-                "50 monitors",
-                "30-second checks",
-                "Email + webhook alerts",
-                "90-day history",
-                "Incident reports",
-              ],
-              cta: "Start free trial",
-            },
-            {
-              name: "Business",
-              price: "$49",
-              desc: "For companies running critical infrastructure.",
-              featured: false,
-              features: [
-                "Unlimited monitors",
-                "10-second checks",
-                "All alert channels",
-                "1-year history",
-                "Priority support",
-              ],
-              cta: "Contact us",
-            },
-          ].map((plan) => (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="col-span-1 flex flex-col justify-between rounded-xl border border-[var(--line)] p-5 md:col-span-2">
+            <div>
+              <div className="text-xl">⏱️</div>
+              <h3 className="mt-2 text-lg font-semibold">
+                {FEATURES[0].title}
+              </h3>
+              <p className="text-[var(--text-2)]">{FEATURES[0].desc}</p>
+            </div>
+
+            <LatencyBar />
+          </div>
+
+          {FEATURES.slice(1).map((f) => (
             <div
-              key={plan.name}
-              className={`border rounded-xl p-6 flex flex-col ${
-                plan.featured ? "border-blue-500 border-2" : ""
-              }`}
+              key={f.title}
+              className="rounded-xl border border-[var(--line)] p-5"
             >
-              {plan.featured && (
-                <span className="text-xs bg-blue-50 text-blue-800 dark:bg-blue-900 dark:text-blue-200 px-3 py-1 rounded-full self-start mb-3">
-                  Most popular
-                </span>
-              )}
-              <p className="text-base font-medium">{plan.name}</p>
-              <p className="text-3xl font-medium mt-3 mb-1">
-                {plan.price}
-                <span className="text-sm font-normal text-muted-foreground">
-                  {" "}
-                  / month
-                </span>
-              </p>
-              <p className="text-xs text-muted-foreground mb-4">{plan.desc}</p>
-              <ul className="space-y-2 mb-6 flex-1">
-                {plan.features.map((f) => (
-                  <li
-                    key={f}
-                    className="text-xs text-muted-foreground flex gap-2 items-center border-b pb-2 last:border-0"
-                  >
-                    <span className="text-green-600">✓</span> {f}
-                  </li>
-                ))}
-              </ul>
-              <Button
-                variant={plan.featured ? "default" : "outline"}
-                className="w-full"
-                onClick={() => navigate({ to: "/register" })}
-              >
-                {plan.cta}
-              </Button>
+              <div className="text-xl">{f.icon}</div>
+              <h3 className="mt-2 font-semibold">{f.title}</h3>
+              <p className="text-[var(--text-2)]">{f.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t px-8 py-6 text-center">
-        <p className="text-sm text-muted-foreground">
-          Pulseway · Built with Go + TanStack Start · Deployed on DigitalOcean
-        </p>
+      {/* ───── HOW IT WORKS ───── */}
+      <section id="how-it-works" className="content-wrap py-20">
+        <h2 className="mb-8 text-3xl font-bold">How it works</h2>
+
+        <div className="grid gap-4 md:grid-cols-3">
+          {HOW_IT_WORKS.map((s) => (
+            <div
+              key={s.step}
+              className="rounded-xl border border-[var(--line)] p-5"
+            >
+              <div className="font-mono text-sm text-[var(--lagoon)]">
+                {s.step}
+              </div>
+              <h3 className="mt-2 font-semibold">{s.title}</h3>
+              <p className="text-[var(--text-2)]">{s.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ───── CTA ───── */}
+      <section className="content-wrap py-20">
+        <div className="rounded-2xl bg-gradient-to-br from-[#1c4e56] to-[#0f2a30] p-16 text-center text-white">
+          <h2 className="text-3xl font-bold">Start monitoring in 60 seconds</h2>
+
+          <p className="mt-2 text-white/60">
+            Free to start · No credit card required
+          </p>
+
+          <button
+            className="btn btn-primary btn-lg mt-6"
+            onClick={() => navigate({ to: "/register" })}
+          >
+            Create account →
+          </button>
+        </div>
+      </section>
+
+      {/* ───── FOOTER ───── */}
+      <footer className="border-t border-[var(--line)] py-6">
+        <div className="content-wrap flex items-center justify-between">
+          <Logo />
+
+          <p className="font-mono text-xs text-[var(--text-3)]">
+            Go · Chi · PostgreSQL · Redis · RabbitMQ
+          </p>
+        </div>
       </footer>
     </div>
   );
