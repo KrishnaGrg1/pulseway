@@ -58,3 +58,43 @@ export interface DashboardStatsResponse {
     avg_latency_ms: number;
   };
 }
+
+export interface Incident {
+  id: number;
+  monitor_id: number;
+  started_at: string;
+  resolved_at: string | null;
+  notified: boolean;
+  duration_seconds?: number;
+}
+
+export interface IncidentsResponse {
+  message: string;
+  data: {
+    incidents: Incident[];
+  };
+}
+
+export interface Alert {
+  id: number;
+  monitor_id: number;
+  email: string;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface AlertsResponse {
+  message: string;
+  data: {
+    alerts: Alert[];
+  };
+}
+
+export interface MonitorDetailsResponse {
+  message: string;
+  data: {
+    monitor: EnhancedMonitor;
+    incidents: Incident[];
+    recent_checks: CheckResult[];
+  };
+}

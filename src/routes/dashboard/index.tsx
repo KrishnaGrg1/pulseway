@@ -229,18 +229,24 @@ function DashboardPage() {
             <MetricCard
               label="Total monitors"
               value={stats?.total_monitors ?? 0}
-              trend={metricsHistory?.total_monitors.map((p) => ({
-                value: p.value,
-                status: p.healthy ? ("up" as const) : ("down" as const),
-              }))}
+              trend={metricsHistory?.total_monitors
+                .slice()
+                .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+                .map((p) => ({
+                  value: p.value,
+                  status: p.healthy ? ("up" as const) : ("down" as const),
+                }))}
             />
             <MetricCard
               label="Healthy"
               value={stats?.healthy_monitors ?? 0}
-              trend={metricsHistory?.healthy_count.map((p) => ({
-                value: p.value,
-                status: p.healthy ? ("up" as const) : ("down" as const),
-              }))}
+              trend={metricsHistory?.healthy_count
+                .slice()
+                .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+                .map((p) => ({
+                  value: p.value,
+                  status: p.healthy ? ("up" as const) : ("down" as const),
+                }))}
             />
             <MetricCard
               label="Uptime 24h"
@@ -249,10 +255,13 @@ function DashboardPage() {
                   ? `${stats.uptime_percentage.toFixed(1)}%`
                   : "0%"
               }
-              trend={metricsHistory?.uptime_percentage.map((p) => ({
-                value: p.value,
-                status: p.healthy ? ("up" as const) : ("down" as const),
-              }))}
+              trend={metricsHistory?.uptime_percentage
+                .slice()
+                .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+                .map((p) => ({
+                  value: p.value,
+                  status: p.healthy ? ("up" as const) : ("down" as const),
+                }))}
             />
             <MetricCard
               label="Avg response"
@@ -261,10 +270,13 @@ function DashboardPage() {
                   ? `${stats.avg_latency_ms.toFixed(0)}ms`
                   : "0ms"
               }
-              trend={metricsHistory?.avg_latency_ms.map((p) => ({
-                value: p.value,
-                status: p.healthy ? ("up" as const) : ("down" as const),
-              }))}
+              trend={metricsHistory?.avg_latency_ms
+                .slice()
+                .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+                .map((p) => ({
+                  value: p.value,
+                  status: p.healthy ? ("up" as const) : ("down" as const),
+                }))}
             />
           </div>
 

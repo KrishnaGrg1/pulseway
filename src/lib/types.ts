@@ -38,14 +38,6 @@ export interface CheckResult {
   checked_at: string
 }
 
-export interface Incident {
-  id: number
-  monitor_id: number
-  started_at: string
-  resolved_at: string | null
-  notified: boolean
-}
-
 export interface DashboardStats {
   total_monitors: number
   healthy_monitors?: number

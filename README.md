@@ -1,193 +1,224 @@
-Welcome to your new TanStack Start app! 
+# Pulseway - Uptime Monitoring Platform
 
-# Getting Started
+Real-time uptime monitoring with instant alerts and incident tracking. Built with Go backend and React frontend.
 
-To run this application:
-
-```bash
-bun install
-bun --bun run dev
-```
-
-# Building For Production
-
-To build this application for production:
+## 🚀 Quick Start
 
 ```bash
-bun --bun run build
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
 ```
 
-## Testing
+The application will be available at `http://localhost:3000`
 
-This project uses [Vitest](https://vitest.dev/) for testing. You can run the tests with:
+## 📋 Features
+
+### ✅ Core Features
+- **Real-time Monitoring**: 30-second interval checks via Go workers
+- **Live Dashboard**: Server-Sent Events (SSE) for instant status updates
+- **Uptime Tracking**: 30-day uptime visualization with percentage metrics
+- **Latency Monitoring**: Track response times with 7-day trend charts
+- **Alert System**: Email notifications on downtime and recovery
+
+### 🆕 Latest Features (v2.0)
+- **Monitor Detail Pages**: Polymarket-inspired UI with comprehensive metrics
+- **Incident Management**: Full incident tracking with resolution times
+- **Alert Recipients**: Manage email notifications per monitor
+- **Incident History**: Complete timeline with durations and status
+
+## 📁 Project Structure
+
+```
+pulseway-fe/
+├── src/
+│   ├── routes/
+│   │   ├── index.tsx                    # Landing page
+│   │   ├── (auth)/
+│   │   │   ├── login.tsx                # Login page
+│   │   │   └── register.tsx             # Registration
+│   │   └── dashboard/
+│   │       ├── index.tsx                # Main dashboard
+│   │       ├── monitor.$id.tsx          # Monitor details (NEW)
+│   │       └── incidents.tsx            # Incidents page (NEW)
+│   ├── components/
+│   │   ├── dashboard/                   # Dashboard components
+│   │   └── ui/                          # Reusable UI components
+│   ├── lib/
+│   │   ├── api.ts                       # Axios instance
+│   │   ├── queries.ts                   # React Query functions
+│   │   ├── types.ts                     # TypeScript types
+│   │   └── api-types.ts                 # API response types
+│   └── hooks/
+│       └── useMonitorStatus.ts          # SSE hook for live updates
+├── BACKEND_INTEGRATION.md               # Backend integration guide
+├── INCIDENTS_AND_ALERTS_GUIDE.md        # New features guide (NEW)
+├── BACKEND_CHECKLIST.md                 # Backend implementation (NEW)
+└── FEATURE_SUMMARY.md                   # User-facing features (NEW)
+```
+
+## 🎨 Tech Stack
+
+**Frontend:**
+- React 19 + TypeScript
+- TanStack Router (file-based routing)
+- TanStack Query (data fetching)
+- Tailwind CSS v4 (styling)
+- Axios (HTTP client)
+- Lucide React (icons)
+- date-fns (date formatting)
+
+**Backend (Required):**
+- Go + Chi Router
+- PostgreSQL
+- Redis (optional)
+- RabbitMQ (optional)
+
+## 📊 Key Routes
+
+| Route | Description |
+|-------|-------------|
+| `/` | Landing page with features |
+| `/login` | User authentication |
+| `/register` | New user registration |
+| `/dashboard` | Main monitoring dashboard |
+| `/dashboard/monitor/:id` | Individual monitor details (NEW) |
+| `/dashboard/incidents` | Incidents overview (NEW) |
+
+## 🔌 API Integration
+
+### Required Backend Endpoints
+
+**Authentication:**
+- `POST /api/v1/auth/register`
+- `POST /api/v1/auth/login`
+
+**Monitors:**
+- `GET /api/v1/monitors`
+- `POST /api/v1/monitors`
+- `PUT /api/v1/monitors/:id`
+- `DELETE /api/v1/monitors/:id`
+- `GET /api/v1/monitors/:id/details` ⭐ NEW
+- `GET /api/v1/monitors/:id/check-history`
+- `GET /api/v1/monitors/:id/incidents` ⭐ NEW
+- `GET /api/v1/monitors/:id/alerts` ⭐ NEW
+
+**Dashboard:**
+- `GET /api/v1/dashboard/stats`
+- `GET /api/v1/dashboard/metrics-history`
+- `GET /api/v1/sse` (Server-Sent Events)
+
+**Incidents:** ⭐ NEW
+- `GET /api/v1/incidents`
+
+**Alerts:** ⭐ NEW
+- `GET /api/v1/alerts`
+- `POST /api/v1/alerts`
+- `DELETE /api/v1/alerts/:id`
+
+See `BACKEND_CHECKLIST.md` for detailed implementation guide.
+
+## 🛠️ Development
+
+### Environment Setup
+
+Create `.env` file:
+```env
+VITE_API_URL=http://localhost:8080/api/v1
+```
+
+### Available Scripts
 
 ```bash
-bun --bun run test
+npm run dev      # Start dev server (port 3000)
+npm run build    # Build for production
+npm run preview  # Preview production build
+npm run test     # Run tests
 ```
 
-## Styling
+### Code Style
 
-This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
+- Use TypeScript for all new code
+- Follow existing component patterns
+- Use TailwindCSS for styling
+- Prefer React Query for data fetching
+- Use Lucide React for icons
 
-### Removing Tailwind CSS
+## 📚 Documentation
 
-If you prefer not to use Tailwind CSS:
+- **BACKEND_INTEGRATION.md** - Complete backend integration guide
+- **INCIDENTS_AND_ALERTS_GUIDE.md** - Detailed guide for incidents and alerts features
+- **BACKEND_CHECKLIST.md** - Step-by-step backend implementation
+- **FEATURE_SUMMARY.md** - User-facing feature overview
 
-1. Remove the demo pages in `src/routes/demo/`
-2. Replace the Tailwind import in `src/styles.css` with your own styles
-3. Remove `tailwindcss()` from the plugins array in `vite.config.ts`
-4. Uninstall the packages: `bun install @tailwindcss/vite tailwindcss -D`
+## 🧪 Testing
 
-
-
-## Routing
-
-This project uses [TanStack Router](https://tanstack.com/router) with file-based routing. Routes are managed as files in `src/routes`.
-
-### Adding A Route
-
-To add a new route to your application just add a new file in the `./src/routes` directory.
-
-TanStack will automatically generate the content of the route file for you.
-
-Now that you have two routes you can use a `Link` component to navigate between them.
-
-### Adding Links
-
-To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
-
-```tsx
-import { Link } from "@tanstack/react-router";
+```bash
+npm run test
 ```
 
-Then anywhere in your JSX you can use it like so:
+Tests use Vitest and React Testing Library.
 
-```tsx
-<Link to="/about">About</Link>
-```
+## 🎯 Roadmap
 
-This will create a link that will navigate to the `/about` route.
+### Phase 1 (Completed ✅)
+- [x] User authentication
+- [x] Monitor CRUD operations
+- [x] Real-time SSE updates
+- [x] Uptime visualization
+- [x] Metrics history
 
-More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
+### Phase 2 (Completed ✅)
+- [x] Monitor detail pages
+- [x] Incident tracking
+- [x] Alert management
+- [x] Incident history
 
-### Using A Layout
+### Phase 3 (Planned)
+- [ ] Custom alert rules
+- [ ] Slack/Discord integrations
+- [ ] Public status pages
+- [ ] SLA tracking
+- [ ] Incident comments
 
-In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you render `{children}` in the `shellComponent`.
+## 🐛 Troubleshooting
 
-Here is an example layout that includes a header:
+**Dashboard not loading:**
+- Verify backend is running on port 8080
+- Check CORS configuration
+- Verify authentication token
 
-```tsx
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
+**SSE not connecting:**
+- Check `/api/v1/sse` endpoint
+- Verify CORS headers include SSE support
+- Check browser console for errors
 
-export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      { charSet: 'utf-8' },
-      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'My App' },
-    ],
-  }),
-  shellComponent: ({ children }) => (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        <header>
-          <nav>
-            <Link to="/">Home</Link>
-            <Link to="/about">About</Link>
-          </nav>
-        </header>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  ),
-})
-```
+**Monitors showing stale data:**
+- Check refetch intervals (30s for stats, 60s for metrics)
+- Verify backend is updating check results
+- Force refresh the page
 
-More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
+## 🤝 Contributing
 
-## Server Functions
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
 
-TanStack Start provides server functions that allow you to write server-side code that seamlessly integrates with your client components.
+## 📄 License
 
-```tsx
-import { createServerFn } from '@tanstack/react-start'
+MIT License - see LICENSE file for details
 
-const getServerTime = createServerFn({
-  method: 'GET',
-}).handler(async () => {
-  return new Date().toISOString()
-})
+## 🔗 Links
 
-// Use in a component
-function MyComponent() {
-  const [time, setTime] = useState('')
-  
-  useEffect(() => {
-    getServerTime().then(setTime)
-  }, [])
-  
-  return <div>Server time: {time}</div>
-}
-```
+- [TanStack Router Docs](https://tanstack.com/router)
+- [TanStack Query Docs](https://tanstack.com/query)
+- [Tailwind CSS Docs](https://tailwindcss.com)
+- [Lucide Icons](https://lucide.dev)
 
-## API Routes
+---
 
-You can create API routes by using the `server` property in your route definitions:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-import { json } from '@tanstack/react-start'
-
-export const Route = createFileRoute('/api/hello')({
-  server: {
-    handlers: {
-      GET: () => json({ message: 'Hello, World!' }),
-    },
-  },
-})
-```
-
-## Data Fetching
-
-There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
-
-For example:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-
-export const Route = createFileRoute('/people')({
-  loader: async () => {
-    const response = await fetch('https://swapi.dev/api/people')
-    return response.json()
-  },
-  component: PeopleComponent,
-})
-
-function PeopleComponent() {
-  const data = Route.useLoaderData()
-  return (
-    <ul>
-      {data.results.map((person) => (
-        <li key={person.name}>{person.name}</li>
-      ))}
-    </ul>
-  )
-}
-```
-
-Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
-
-# Demo files
-
-Files prefixed with `demo` can be safely deleted. They are there to provide a starting point for you to play around with the features you've installed.
-
-# Learn More
-
-You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
-
-For TanStack Start specific documentation, visit [TanStack Start](https://tanstack.com/start).
+**Built with ❤️ using React, TypeScript, and TanStack**

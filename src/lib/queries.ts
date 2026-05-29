@@ -3,9 +3,13 @@ import type { Monitor, DashboardStats, AuthResponse, User } from './types'
 import type {
   CheckHistoryResponse,
   MetricsHistoryResponse,
-  EnhancedMonitorsResponse,
   DashboardStatsResponse,
   CheckResult,
+  Incident,
+  IncidentsResponse,
+  Alert,
+  AlertsResponse,
+  MonitorDetailsResponse,
 } from './api-types'
 
 const handleServiceError = (error: unknown, fallbackMessage: string): never => {
@@ -91,5 +95,57 @@ export const getDashboardStats = async (): Promise<DashboardStats> => {
     return res.data.data
   } catch (error: unknown) {
     return handleServiceError(error, 'Failed to fetch dashboard stats')
+  }
+}
+
+// Incidents
+export const getIncidents = async (monitorId?: number): Promise<Incident[]> => {
+  try {
+    const url = monitorId ? `/monitors/${monitorId}/incidents` : '/incidents'
+    const res = await api.get<IncidentsResponse>(url)
+    return res.data.data.incidents
+  } catch (error: unknown) {
+    return handleServiceError(error, 'Failed to fetch incidents')
+  }
+}
+
+// Alerts
+export const getAlerts = async (monitorId?: number): Promise<Alert[]> => {
+  try {
+    const url = monitorId ? `/monitors/${monitorId}/alerts` : '/alerts'
+    const res = await api.get<AlertsResponse>(url)
+    return res.data.data.alerts
+  } catch (error: unknown) {
+    return handleServiceError(error, 'Failed to fetch alerts')
+  }
+}
+
+export const createAlert = async (data: {
+  monitor_id: number
+  email: string
+}): Promise<Alert> => {
+  try {
+    const res = await api.post<{ data: Alert }>('/alerts', data)
+    return res.data.data
+  } catch (error: unknown) {
+    return handleServiceError(error, 'Failed to create alert')
+  }
+}
+
+export const deleteAlert = async (id: number): Promise<void> => {
+  try {
+    await api.delete(`/alerts/${id}`)
+  } catch (error: unknown) {
+    return handleServiceError(error, 'Failed to delete alert')
+  }
+}
+
+// Monitor Details - Single monitor with full context
+export const getMonitorDetails = async (id: number): Promise<MonitorDetailsResponse['data']> => {
+  try {
+    const res = await api.get<MonitorDetailsResponse>(`/monitors/${id}/details`)
+    return res.data.data
+  } catch (error: unknown) {
+    return handleServiceError(error, 'Failed to fetch monitor details')
   }
 }

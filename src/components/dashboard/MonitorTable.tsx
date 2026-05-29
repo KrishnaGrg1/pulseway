@@ -1,4 +1,5 @@
-import { ArrowUpRight, CheckCircle, MoreVertical, Trash2 } from "lucide-react";
+import { ArrowUpRight, CheckCircle, MoreVertical, Trash2, Eye } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import type { Monitor } from "#/lib/types";
 import { StatusIndicator } from "./StatusIndicator";
 import { UptimeBar } from "./UptimeBar";
@@ -71,7 +72,7 @@ export function MonitorTable({
       ) : (
         <>
           {/* TABLE HEADER - Desktop only */}
-          <div className="hidden grid-cols-[100px_1fr_100px_80px_100px_120px_48px] items-center gap-3 border-b border-[#2a2d3a] px-4 py-2 text-xs uppercase tracking-wide text-slate-400 lg:grid">
+          <div className="hidden grid-cols-[100px_1fr_100px_80px_100px_120px_80px] items-center gap-3 border-b border-[#2a2d3a] px-4 py-2 text-xs uppercase tracking-wide text-slate-400 lg:grid">
             <div>Status</div>
             <div>URL</div>
             <div>Uptime</div>
@@ -87,7 +88,7 @@ export function MonitorTable({
             return (
               <div key={monitor.id}>
                 {/* Desktop view */}
-                <div className="hidden grid-cols-[100px_1fr_100px_80px_100px_120px_48px] items-center gap-3 border-b border-[#2a2d3a] px-4 py-3 hover:bg-[#0f1117] lg:grid">
+                <div className="hidden grid-cols-[100px_1fr_100px_80px_100px_120px_80px] items-center gap-3 border-b border-[#2a2d3a] px-4 py-3 hover:bg-[#0f1117] lg:grid">
                   <div>
                     <StatusIndicator status={status} />
                   </div>
@@ -112,18 +113,27 @@ export function MonitorTable({
                   </div>
 
                   <div className="text-right font-mono text-sm text-slate-200">
-                    99.8%
+                    {monitor.uptime_percentage?.toFixed(1) ?? 0}%
                   </div>
 
                   <div className="text-right font-mono text-sm text-slate-200">
-                    52ms
+                    {monitor.avg_latency_ms?.toFixed(0) ?? 0}ms
                   </div>
 
                   <div className="text-right text-xs text-slate-400">
-                    2 min ago
+                    {monitor.last_checked_at
+                      ? new Date(monitor.last_checked_at).toLocaleTimeString()
+                      : "Never"}
                   </div>
 
-                  <div className="flex justify-end">
+                  <div className="flex justify-end gap-1">
+                    <Link
+                      to="/dashboard/monitor/$id"
+                      params={{ id: monitor.id.toString() }}
+                      className="rounded p-1 text-slate-400 hover:bg-[#1a1d27] hover:text-slate-200"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Link>
                     <button
                       className="rounded p-1 text-slate-400 hover:bg-[#1a1d27] hover:text-slate-200"
                       onClick={() =>
@@ -155,14 +165,23 @@ export function MonitorTable({
                         <ArrowUpRight className="h-3 w-3 shrink-0" />
                       </a>
                     </div>
-                    <button
-                      className="rounded p-1 text-slate-400 hover:bg-[#1a1d27] hover:text-slate-200"
-                      onClick={() =>
-                        setEditingId(editingId === monitor.id ? null : monitor.id)
-                      }
-                    >
-                      <MoreVertical className="h-4 w-4" />
-                    </button>
+                    <div className="flex gap-1">
+                      <Link
+                        to="/dashboard/monitor/$id"
+                        params={{ id: monitor.id.toString() }}
+                        className="rounded p-1 text-slate-400 hover:bg-[#1a1d27] hover:text-slate-200"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Link>
+                      <button
+                        className="rounded p-1 text-slate-400 hover:bg-[#1a1d27] hover:text-slate-200"
+                        onClick={() =>
+                          setEditingId(editingId === monitor.id ? null : monitor.id)
+                        }
+                      >
+                        <MoreVertical className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
 
                   <div>
@@ -173,14 +192,22 @@ export function MonitorTable({
                     <div className="flex gap-4">
                       <div>
                         <span className="text-slate-400">Uptime: </span>
-                        <span className="font-mono text-slate-200">99.8%</span>
+                        <span className="font-mono text-slate-200">
+                          {monitor.uptime_percentage?.toFixed(1) ?? 0}%
+                        </span>
                       </div>
                       <div>
                         <span className="text-slate-400">Response: </span>
-                        <span className="font-mono text-slate-200">52ms</span>
+                        <span className="font-mono text-slate-200">
+                          {monitor.avg_latency_ms?.toFixed(0) ?? 0}ms
+                        </span>
                       </div>
                     </div>
-                    <div className="text-slate-400">2 min ago</div>
+                    <div className="text-slate-400">
+                      {monitor.last_checked_at
+                        ? new Date(monitor.last_checked_at).toLocaleTimeString()
+                        : "Never"}
+                    </div>
                   </div>
                 </div>
 
