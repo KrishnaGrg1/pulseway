@@ -21,6 +21,12 @@ export interface Monitor {
   interval_secs: number
   is_active: boolean
   created_at: string
+  // Enhanced fields from backend
+  current_status?: "up" | "down" | "unknown"
+  uptime_percentage?: number
+  avg_latency_ms?: number
+  last_checked_at?: string
+  last_check_status?: string
 }
 
 export interface CheckResult {
@@ -42,7 +48,8 @@ export interface Incident {
 
 export interface DashboardStats {
   total_monitors: number
-  active_monitors: number
+  healthy_monitors?: number
+  active_monitors?: number
   uptime_percentage: number
   avg_latency_ms: number
 }

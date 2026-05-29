@@ -1,16 +1,25 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
+import { Plus, Radio, Menu, X } from "lucide-react";
 import {
   getMonitors,
   getDashboardStats,
   createMonitor,
   deleteMonitor,
   updateMonitor,
+  getCheckHistory,
+  getMetricsHistory,
 } from "#/lib/queries";
-import { logout, isAuthenticated } from "#/lib/auth";
+import { isAuthenticated } from "#/lib/auth";
 import type { Monitor } from "#/lib/types";
-import Logo from "#/components/Logo";
+import { useMonitorStatus } from "#/hooks";
+import {
+  MetricCard,
+  MonitorForm,
+  DashboardSidebar,
+  MonitorTable,
+} from "#/components/dashboard";
 
 export const Route = createFileRoute("/dashboard/")({
   component: DashboardPage,
@@ -20,50 +29,22 @@ function DashboardPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
-  const [name, setName] = useState("");
-  const [url, setUrl] = useState("");
-  const [interval, setInterval] = useState(60);
-  const [liveStatuses, setLiveStatuses] = useState<Record<number, string>>({});
-  const [editingMonitorId, setEditingMonitorId] = useState<number | null>(null);
-  // Redirect if not authenticated
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [uptimeHistories, setUptimeHistories] = useState<
+    Record<number, Array<{ status: "up" | "down" }>>
+  >({});
+
+  // Use custom hook for real-time status updates
+  const { statuses: liveStatuses, isConnected } = useMonitorStatus();
+
   useEffect(() => {
     if (!isAuthenticated()) {
       navigate({ to: "/login" });
     }
-  }, []);
+  }, [navigate]);
 
-  // SSE connection for live updates
-  useEffect(() => {
-    const apiUrl = import.meta.env.VITE_API_URL;
-    let source: EventSource;
-
-    const connect = () => {
-      source = new EventSource(`${apiUrl}/sse`);
-
-      source.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        if (data.monitor_id) {
-          setLiveStatuses((prev) => ({
-            ...prev,
-            [data.monitor_id]: data.status,
-          }));
-          queryClient.invalidateQueries({ queryKey: ["monitors"] });
-        }
-      };
-
-      source.onerror = () => {
-        source.close();
-        // Reconnect after 3 seconds
-        setTimeout(connect, 3000);
-      };
-    };
-
-    connect();
-
-    return () => source?.close();
-  }, []);
-
-  const { data: monitors, isLoading: monitorsLoading } = useQuery({
+  const { data: monitors, isLoading } = useQuery({
     queryKey: ["monitors"],
     queryFn: getMonitors,
   });
@@ -74,30 +55,39 @@ function DashboardPage() {
     refetchInterval: 30000,
   });
 
+  // Fetch real metrics history (7-day trends)
+  const { data: metricsHistory } = useQuery({
+    queryKey: ["metrics-history"],
+    queryFn: () => getMetricsHistory(7),
+    refetchInterval: 60000, // Refetch every minute
+  });
+
   const createMutation = useMutation({
-    mutationFn: () => createMonitor({ name, url, interval_secs: interval }),
+    mutationFn: (value: { name: string; url: string; interval_secs: number }) =>
+      createMonitor(value),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["monitors"] });
       queryClient.invalidateQueries({ queryKey: ["stats"] });
       setShowForm(false);
-      setName("");
-      setUrl("");
-      setInterval(60);
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id }: { id: number }) =>
-      updateMonitor(id, { name, url, interval_secs: interval }),
+    mutationFn: ({
+      id,
+      ...value
+    }: {
+      id: number;
+      name: string;
+      url: string;
+      interval_secs: number;
+    }) => updateMonitor(id, value),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["monitors"] });
-      queryClient.invalidateQueries({ queryKey: ["stats"] });
-      setEditingMonitorId(null);
-      setName("");
-      setUrl("");
-      setInterval(60);
+      setEditingId(null);
     },
   });
+
   const deleteMutation = useMutation({
     mutationFn: (id: number) => deleteMonitor(id),
     onSuccess: () => {
@@ -106,411 +96,203 @@ function DashboardPage() {
     },
   });
 
+  // Merge backend status with SSE live updates
   const getStatus = (monitor: Monitor) => {
-    return liveStatuses[monitor.id] || "unknown";
+    // Prefer SSE live status if available and connected
+    if (isConnected && liveStatuses[monitor.id]) {
+      return liveStatuses[monitor.id];
+    }
+    // Fallback to backend's current_status
+    return monitor.current_status ?? "unknown";
+  };
+
+  const healthyCount =
+    monitors?.filter((m) => getStatus(m) === "up").length ?? 0;
+
+  // Fetch uptime history for each monitor (30-segment uptime bar)
+  useEffect(() => {
+    if (!monitors) return;
+
+    const fetchHistories = async () => {
+      const histories: typeof uptimeHistories = {};
+
+      for (const monitor of monitors) {
+        try {
+          const checks = await getCheckHistory(monitor.id, 30);
+          histories[monitor.id] = checks.map((check) => ({
+            status: check.status,
+          }));
+        } catch (error) {
+          console.error(
+            `Failed to fetch history for monitor ${monitor.id}:`,
+            error,
+          );
+          // Fallback to empty array - component should handle gracefully
+          histories[monitor.id] = [];
+        }
+      }
+
+      setUptimeHistories(histories);
+    };
+
+    fetchHistories();
+
+    // Refetch histories every 2 minutes to keep uptime bars fresh
+    const interval = setInterval(fetchHistories, 120000);
+    return () => clearInterval(interval);
+  }, [monitors]);
+
+  const getUptimeHistory = (monitor: Monitor) => {
+    const history = uptimeHistories[monitor.id];
+
+    // If we have real history data, use it
+    if (history && history.length > 0) {
+      return history;
+    }
+
+    // Fallback: create a placeholder based on current status
+    const currentStatus = getStatus(monitor);
+    return Array(30).fill({
+      status: currentStatus === "up" ? ("up" as const) : ("down" as const),
+    });
   };
 
   return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "var(--sidebar-w) 1fr",
-        minHeight: "100dvh",
-      }}
-    >
-      {/* Sidebar */}
-      <aside className="app-sidebar">
-        <div className="app-sidebar-header">
-          <Logo />
-        </div>
-        <div className="sidebar-body">
-          <span className="sidebar-section-label">Navigation</span>
-          <div className="sidebar-link active">Overview</div>
-          <div className="sidebar-link" style={{ opacity: 0.5 }}>
-            Incidents
-          </div>
-          <div className="sidebar-link" style={{ opacity: 0.5 }}>
-            Settings
-          </div>
-
-          <span className="sidebar-section-label" style={{ marginTop: "20px" }}>
-            Monitors
-          </span>
-          {monitors?.map((m) => {
-            const s = getStatus(m);
-            return (
-              <div
-                key={m.id}
-                className="sidebar-link"
-                style={{ fontSize: "12px" }}
-              >
-                <div
-                  className={`sidebar-monitor-dot ${s === "up" ? "dot-up" : s === "down" ? "dot-down" : "dot-pend"}`}
-                />
-                <span
-                  style={{
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {m.name}
-                </span>
-              </div>
-            );
-          })}
-
+    <div className="flex min-h-screen flex-col bg-[#0f1117] lg:flex-row">
+      {/* MOBILE SIDEBAR - Slide-in overlay */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          {/* Backdrop */}
           <div
-            style={{
-              marginTop: "auto",
-              paddingTop: "24px",
-              borderTop: "1px solid var(--line)",
-            }}
-          >
+            className="absolute inset-0 bg-black/60"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+          {/* Sidebar */}
+          <div className="absolute left-0 top-0 h-full w-64 animate-in slide-in-from-left">
+            <DashboardSidebar />
+          </div>
+        </div>
+      )}
+
+      {/* DESKTOP SIDEBAR */}
+      <div className="hidden lg:block">
+        <DashboardSidebar />
+      </div>
+
+      {/* MAIN CONTENT */}
+      <main className="flex-1">
+        {/* HEADER */}
+        <header className="flex h-14 items-center justify-between gap-3 border-b border-[#2a2d3a] px-4 md:px-6">
+          <div className="flex items-center gap-2 md:gap-4">
+            {/* Mobile menu button */}
             <button
-              className="sidebar-link"
-              style={{ width: "100%", color: "var(--text-3)" }}
-              onClick={logout}
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="rounded p-1 text-slate-400 hover:bg-[#1a1d27] hover:text-slate-200 lg:hidden"
+              aria-label="Toggle menu"
             >
-              Logout
+              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
-          </div>
-        </div>
-      </aside>
+            <h1 className="text-base font-medium text-slate-200 md:text-lg">Dashboard</h1>
 
-      {/* Main content */}
-      <main className="app-main">
-        {/* Page header */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "flex-start",
-            justifyContent: "space-between",
-            marginBottom: "28px",
-          }}
-        >
-          <div>
-            <h1 className="page-title">Overview</h1>
-            <p className="page-sub">All monitors · live via SSE</p>
-          </div>
-          <button
-            className="btn btn-primary btn-sm"
-            onClick={() => setShowForm(!showForm)}
-          >
-            {showForm ? "Cancel" : "+ Add monitor"}
-          </button>
-        </div>
-
-        {/* Add monitor form */}
-        {showForm && (
-          <div
-            className="card fade-in"
-            style={{ padding: "24px", marginBottom: "24px" }}
-          >
-            <p
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: "12px",
-                fontWeight: 700,
-                letterSpacing: "0.12em",
-                textTransform: "uppercase",
-                color: "var(--text-3)",
-                marginBottom: "16px",
-              }}
-            >
-              New monitor
-            </p>
+            {/* SSE Connection Status */}
             <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 2fr auto",
-                gap: "12px",
-                alignItems: "flex-end",
-              }}
+              className={`flex items-center gap-1.5 rounded-md px-2 py-1 text-xs ${
+                isConnected
+                  ? "bg-[#22c55e]/10 text-[#22c55e]"
+                  : "bg-slate-700/10 text-slate-400"
+              }`}
             >
-              <div>
-                <label className="field-label">Name</label>
-                <input
-                  className="field"
-                  value={name}
-                  placeholder="Main API"
-                  onChange={(e) => setName(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="field-label">URL</label>
-                <input
-                  className="field"
-                  value={url}
-                  placeholder="https://api.example.com/health"
-                  onChange={(e) => setUrl(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="field-label">Interval (s)</label>
-                <input
-                  className="field"
-                  type="number"
-                  value={interval}
-                  placeholder="60"
-                  style={{ width: "90px" }}
-                  onChange={(e) => setInterval(Number(e.target.value))}
-                />
-              </div>
+              <Radio
+                className={`h-3 w-3 ${isConnected ? "animate-pulse" : ""}`}
+              />
+              <span className="hidden sm:inline">{isConnected ? "Live" : "Disconnected"}</span>
             </div>
-            <button
-              className="btn btn-primary btn-sm"
-              style={{ marginTop: "16px" }}
-              onClick={() => createMutation.mutate()}
-              disabled={createMutation.isPending || !name || !url}
-            >
-              {createMutation.isPending ? "Creating…" : "Create monitor"}
-            </button>
           </div>
-        )}
 
-        {/* Stats row */}
-        {stats && (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(4, 1fr)",
-              gap: "12px",
-              marginBottom: "28px",
+          <button
+            onClick={() => {
+              setEditingId(null);
+              setShowForm(!showForm);
             }}
+            className="flex items-center gap-1.5 rounded-md bg-[#3b82f6] px-3 py-2 text-sm font-medium text-white hover:bg-[#2563eb] md:gap-2 md:px-4"
           >
-            {[
-              { label: "Total monitors", value: stats.total_monitors },
-              { label: "Active now", value: stats.active_monitors },
-              {
-                label: "Uptime 24h",
-                value: `${stats.uptime_percentage?.toFixed(1)}%`,
-                accent: true,
-              },
-              {
-                label: "Avg latency",
-                value: `${stats.avg_latency_ms?.toFixed(0)}ms`,
-              },
-            ].map((s) => (
-              <div key={s.label} className="stat-tile">
-                <div className="stat-tile-label">{s.label}</div>
-                <div
-                  className="stat-tile-value"
-                  style={s.accent ? { color: "var(--lagoon-deep)" } : {}}
-                >
-                  {s.value}
-                </div>
-              </div>
-            ))}
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">Add monitor</span>
+            <span className="sm:hidden">Add</span>
+          </button>
+        </header>
+
+        {/* CONTENT */}
+        <div className="p-4 md:p-6">
+          {/* METRICS */}
+          <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 md:gap-4">
+            <MetricCard
+              label="Total monitors"
+              value={stats?.total_monitors ?? 0}
+              trend={metricsHistory?.total_monitors.map((p) => ({
+                value: p.value,
+                status: p.healthy ? ("up" as const) : ("down" as const),
+              }))}
+            />
+            <MetricCard
+              label="Healthy"
+              value={stats?.healthy_monitors ?? 0}
+              trend={metricsHistory?.healthy_count.map((p) => ({
+                value: p.value,
+                status: p.healthy ? ("up" as const) : ("down" as const),
+              }))}
+            />
+            <MetricCard
+              label="Uptime 24h"
+              value={
+                stats?.uptime_percentage
+                  ? `${stats.uptime_percentage.toFixed(1)}%`
+                  : "0%"
+              }
+              trend={metricsHistory?.uptime_percentage.map((p) => ({
+                value: p.value,
+                status: p.healthy ? ("up" as const) : ("down" as const),
+              }))}
+            />
+            <MetricCard
+              label="Avg response"
+              value={
+                stats?.avg_latency_ms
+                  ? `${stats.avg_latency_ms.toFixed(0)}ms`
+                  : "0ms"
+              }
+              trend={metricsHistory?.avg_latency_ms.map((p) => ({
+                value: p.value,
+                status: p.healthy ? ("up" as const) : ("down" as const),
+              }))}
+            />
           </div>
-        )}
 
-        {/* Monitor list */}
-        {monitorsLoading ? (
-          <p
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: "13px",
-              color: "var(--text-3)",
-            }}
-          >
-            Loading monitors…
-          </p>
-        ) : monitors?.length === 0 ? (
-          <div
-            className="card"
-            style={{ padding: "56px", textAlign: "center" }}
-          >
-            <p
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: "13px",
-                color: "var(--text-3)",
-                marginBottom: "16px",
-              }}
-            >
-              No monitors yet.
-            </p>
-            <button
-              className="btn btn-primary btn-sm"
-              onClick={() => setShowForm(true)}
-            >
-              Add your first monitor
-            </button>
-          </div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            {monitors?.map((monitor) => {
-              const status = getStatus(monitor);
-              return (
-                <div key={monitor.id}>
-                  <div
-                    className={`monitor-row ${status === "down" ? "is-down" : ""}`}
-                  >
-                    <span
-                      className={`badge ${status === "up" ? "badge-up" : status === "down" ? "badge-down" : "badge-pend"}`}
-                    >
-                      {status === "up"
-                        ? "UP"
-                        : status === "down"
-                          ? "DOWN"
-                          : "PENDING"}
-                    </span>
+          {/* ADD FORM */}
+          {showForm && (
+            <div className="mb-6">
+              <MonitorForm
+                onSubmit={(value) => createMutation.mutate(value)}
+                isPending={createMutation.isPending}
+                submitLabel="Create monitor"
+                onCancel={() => setShowForm(false)}
+              />
+            </div>
+          )}
 
-                    <div style={{ flex: "0 0 180px" }}>
-                      <p
-                        style={{
-                          fontFamily: "var(--font-mono)",
-                          fontSize: "13px",
-                          fontWeight: 600,
-                          color: "var(--text-1)",
-                          margin: 0,
-                        }}
-                      >
-                        {monitor.name}
-                      </p>
-                      <p
-                        style={{
-                          fontFamily: "var(--font-mono)",
-                          fontSize: "11px",
-                          color: "var(--text-3)",
-                          margin: 0,
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {monitor.url}
-                      </p>
-                    </div>
-
-                    {/* Heartbeat visualization */}
-                    <div className="heartbeat" style={{ flex: 1 }}>
-                      {Array.from({ length: 30 }).map((_, i) => (
-                        <div
-                          key={i}
-                          className={`hb-seg ${status === "down" && i > 22 ? "down" : status !== "pending" ? "up" : ""}`}
-                          style={{
-                            height: `${8 + Math.sin(i * 0.8) * 4 + Math.random() * 3}px`,
-                          }}
-                        />
-                      ))}
-                    </div>
-
-                    <span
-                      style={{
-                        fontFamily: "var(--font-mono)",
-                        fontSize: "12px",
-                        color: "var(--text-2)",
-                        flexShrink: 0,
-                      }}
-                    >
-                      every {monitor.interval_secs}s
-                    </span>
-                    <button
-                      className="btn btn-sm"
-                      onClick={() => {
-                        setEditingMonitorId(monitor.id);
-                        setName(monitor.name);
-                        setUrl(monitor.url);
-                        setInterval(monitor.interval_secs);
-                      }}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className="btn btn-danger btn-sm"
-                      onClick={() => deleteMutation.mutate(monitor.id)}
-                      disabled={deleteMutation.isPending}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                  {editingMonitorId === monitor.id && (
-                    <div
-                      className="card fade-in"
-                      style={{ padding: "24px", marginBottom: "24px" }}
-                    >
-                      <p
-                        style={{
-                          fontFamily: "var(--font-mono)",
-                          fontSize: "12px",
-                          fontWeight: 700,
-                          letterSpacing: "0.12em",
-                          textTransform: "uppercase",
-                          color: "var(--text-3)",
-                          marginBottom: "16px",
-                        }}
-                      >
-                        Update monitor
-                      </p>
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns: "1fr 2fr auto",
-                          gap: "12px",
-                          alignItems: "flex-end",
-                        }}
-                      >
-                        <div>
-                          <label className="field-label">Name</label>
-                          <input
-                            className="field"
-                            value={name}
-                            placeholder="Main API"
-                            onChange={(e) => setName(e.target.value)}
-                          />
-                        </div>
-                        <div>
-                          <label className="field-label">URL</label>
-                          <input
-                            className="field"
-                            value={url}
-                            placeholder="https://api.example.com/health"
-                            onChange={(e) => setUrl(e.target.value)}
-                          />
-                        </div>
-                        <div>
-                          <label className="field-label">Interval (s)</label>
-                          <input
-                            className="field"
-                            type="number"
-                            value={interval}
-                            placeholder="60"
-                            style={{ width: "90px" }}
-                            onChange={(e) =>
-                              setInterval(Number(e.target.value))
-                            }
-                          />
-                        </div>
-                      </div>
-                      <button
-                        className="btn btn-primary btn-sm"
-                        style={{ marginTop: "16px" }}
-                        onClick={() =>
-                          updateMutation.mutate({
-                            id: Number(editingMonitorId),
-                          })
-                        }
-                        disabled={updateMutation.isPending || !name || !url}
-                      >
-                        {createMutation.isPending
-                          ? "Updating…"
-                          : "Update monitor"}
-                      </button>
-                      <button
-                        className="btn btn-sm"
-                        onClick={() => setEditingMonitorId(null)}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
+          {/* MONITORS TABLE */}
+          <MonitorTable
+            monitors={monitors}
+            isLoading={isLoading}
+            editingId={editingId}
+            setEditingId={setEditingId}
+            setShowForm={setShowForm}
+            getStatus={getStatus}
+            getUptimeHistory={getUptimeHistory}
+            updateMutation={updateMutation}
+            deleteMutation={deleteMutation}
+          />
+        </div>
       </main>
     </div>
   );

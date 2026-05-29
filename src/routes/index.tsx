@@ -123,14 +123,15 @@ function HomePage() {
     <div className="flex min-h-screen flex-col bg-[var(--bg)]">
       {/* ───── NAV ───── */}
       <header className="border-b border-[var(--line)]">
-        <div className="content-wrap flex items-center justify-between py-4">
+        <div className="content-wrap flex items-center justify-between py-3 md:py-4">
           <Logo />
 
-          <nav className="flex items-center gap-6">
-            <a href="#features" className="nav-link">
+          {/* Desktop Navigation */}
+          <nav className="hidden items-center gap-4 md:flex lg:gap-6">
+            <a href="#features" className="nav-link text-sm">
               Features
             </a>
-            <a href="#how-it-works" className="nav-link">
+            <a href="#how-it-works" className="nav-link text-sm">
               How it works
             </a>
 
@@ -148,19 +149,36 @@ function HomePage() {
               Get started
             </button>
           </nav>
+
+          {/* Mobile Navigation */}
+          <div className="flex items-center gap-2 md:hidden">
+            <button
+              onClick={() => navigate({ to: "/login" })}
+              className="rounded-md border border-[var(--line)] bg-transparent px-3 py-1.5 text-xs font-medium text-[var(--text-1)] hover:bg-[var(--surface-1)]"
+            >
+              Login
+            </button>
+
+            <button
+              onClick={() => navigate({ to: "/register" })}
+              className="rounded-md bg-[var(--lagoon-deep)] px-3 py-1.5 text-xs font-medium text-white hover:brightness-110"
+            >
+              Get started
+            </button>
+          </div>
         </div>
       </header>
 
       {/* ───── HERO ───── */}
-      <section className="content-wrap py-24">
-        <div className="grid items-center gap-12 lg:grid-cols-2">
+      <section className="content-wrap py-12 md:py-20 lg:py-24">
+        <div className="grid items-center gap-8 md:gap-12 lg:grid-cols-2">
           {/* LEFT */}
           <div>
-            <p className="text-xs uppercase tracking-[0.25em] text-[var(--text-3)]">
+            <p className="text-[10px] uppercase tracking-[0.25em] text-[var(--text-3)] md:text-xs">
               Uptime monitoring
             </p>
 
-            <h1 className="mt-3 text-4xl font-bold leading-tight md:text-5xl">
+            <h1 className="mt-3 text-3xl font-bold leading-tight md:text-4xl lg:text-5xl">
               Know when your APIs
               <br />
               go down <span className="text-[var(--lagoon)]">before</span>
@@ -168,21 +186,21 @@ function HomePage() {
               your users do
             </h1>
 
-            <p className="mt-4 max-w-lg text-[var(--text-2)]">
+            <p className="mt-4 max-w-lg text-sm text-[var(--text-2)] md:text-base">
               30-second checks, instant alerts, and real-time latency tracking
               built for developers.
             </p>
 
-            <div className="mt-6 flex gap-3">
+            <div className="mt-6 flex flex-col gap-2.5 sm:flex-row sm:gap-3">
               <button
-                className="btn btn-primary btn-lg"
+                className="btn btn-primary justify-center px-6 py-2.5 text-sm md:btn-lg"
                 onClick={() => navigate({ to: "/register" })}
               >
                 Start free
               </button>
 
               <button
-                className="btn btn-secondary btn-lg"
+                className="btn btn-secondary justify-center px-6 py-2.5 text-sm md:btn-lg"
                 onClick={() => navigate({ to: "/login" })}
               >
                 Login
@@ -216,17 +234,17 @@ function HomePage() {
           </div>
 
           {/* RIGHT */}
-          <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-0)] p-5">
+          <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-0)] p-4 md:p-5">
             <div className="flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full bg-[var(--line)]" />
-              <div className="h-2 w-2 rounded-full bg-[var(--line)]" />
-              <div className="h-2 w-2 rounded-full bg-[var(--line)]" />
-              <span className="ml-2 font-mono text-[11px] text-[var(--text-3)]">
+              <div className="h-1.5 w-1.5 rounded-full bg-[var(--line)] md:h-2 md:w-2" />
+              <div className="h-1.5 w-1.5 rounded-full bg-[var(--line)] md:h-2 md:w-2" />
+              <div className="h-1.5 w-1.5 rounded-full bg-[var(--line)] md:h-2 md:w-2" />
+              <span className="ml-2 font-mono text-[10px] text-[var(--text-3)] md:text-[11px]">
                 dashboard.pulseway
               </span>
             </div>
 
-            <div className="mt-4 grid grid-cols-3 gap-2">
+            <div className="mt-3 grid grid-cols-3 gap-2 md:mt-4">
               {[
                 { label: "Monitors", value: "4" },
                 { label: "Uptime", value: "99.8%" },
@@ -303,11 +321,11 @@ function HomePage() {
       </section>
 
       {/* ───── FEATURES ───── */}
-      <section id="features" className="content-wrap py-20">
-        <h2 className="mb-8 text-3xl font-bold">Everything you need</h2>
+      <section id="features" className="content-wrap py-12 md:py-16 lg:py-20">
+        <h2 className="mb-6 text-2xl font-bold md:mb-8 md:text-3xl">Everything you need</h2>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <div className="col-span-1 flex flex-col justify-between rounded-xl border border-[var(--line)] p-5 md:col-span-2">
+        <div className="grid gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3">
+          <div className="col-span-1 flex flex-col justify-between rounded-xl border border-[var(--line)] p-4 md:col-span-2 md:p-5">
             <div>
               <div className="text-xl">⏱️</div>
               <h3 className="mt-2 text-lg font-semibold">
@@ -333,10 +351,10 @@ function HomePage() {
       </section>
 
       {/* ───── HOW IT WORKS ───── */}
-      <section id="how-it-works" className="content-wrap py-20">
-        <h2 className="mb-8 text-3xl font-bold">How it works</h2>
+      <section id="how-it-works" className="content-wrap py-12 md:py-16 lg:py-20">
+        <h2 className="mb-6 text-2xl font-bold md:mb-8 md:text-3xl">How it works</h2>
 
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-3 md:grid-cols-3 md:gap-4">
           {HOW_IT_WORKS.map((s) => (
             <div
               key={s.step}
@@ -353,16 +371,16 @@ function HomePage() {
       </section>
 
       {/* ───── CTA ───── */}
-      <section className="content-wrap py-20">
-        <div className="rounded-2xl bg-gradient-to-br from-[#1c4e56] to-[#0f2a30] p-16 text-center text-white">
-          <h2 className="text-3xl font-bold">Start monitoring in 60 seconds</h2>
+      <section className="content-wrap py-12 md:py-16 lg:py-20">
+        <div className="rounded-xl bg-gradient-to-br from-[#1c4e56] to-[#0f2a30] p-8 text-center text-white md:rounded-2xl md:p-12 lg:p-16">
+          <h2 className="text-2xl font-bold md:text-3xl">Start monitoring in 60 seconds</h2>
 
-          <p className="mt-2 text-white/60">
+          <p className="mt-2 text-sm text-white/60 md:text-base">
             Free to start · No credit card required
           </p>
 
           <button
-            className="btn btn-primary btn-lg mt-6"
+            className="btn btn-primary mt-5 justify-center px-6 py-2.5 text-sm md:btn-lg md:mt-6"
             onClick={() => navigate({ to: "/register" })}
           >
             Create account →
@@ -371,11 +389,11 @@ function HomePage() {
       </section>
 
       {/* ───── FOOTER ───── */}
-      <footer className="border-t border-[var(--line)] py-6">
-        <div className="content-wrap flex items-center justify-between">
+      <footer className="border-t border-[var(--line)] py-5 md:py-6">
+        <div className="content-wrap flex flex-col items-center justify-between gap-3 md:flex-row md:gap-0">
           <Logo />
 
-          <p className="font-mono text-xs text-[var(--text-3)]">
+          <p className="font-mono text-[10px] text-[var(--text-3)] md:text-xs">
             Go · Chi · PostgreSQL · Redis · RabbitMQ
           </p>
         </div>

@@ -1,7 +1,9 @@
 import axios from 'axios'
+import type { APIResponse } from './types'
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
+  withCredentials: true, // Send cookies with requests
 })
 
 // Automatically attach token to every request
@@ -21,7 +23,15 @@ api.interceptors.response.use(
       localStorage.removeItem('token')
       window.location.href = '/login'
     }
-    return Promise.reject(error)
+
+    const payload = error.response?.data as APIResponse<unknown> | undefined
+    const message =
+      payload?.error?.details ||
+      payload?.message ||
+      error.message ||
+      'Request failed'
+
+    return Promise.reject(new Error(message))
   }
 )
 
