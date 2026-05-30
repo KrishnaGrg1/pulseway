@@ -1,17 +1,13 @@
-import { useForm } from "@tanstack/react-form";
-import { FieldError } from "#/components/ui/field";
-import { Label } from "#/components/ui/label";
+import { useForm } from '@tanstack/react-form'
+import { FieldError } from '#/components/ui/field'
+import { Label } from '#/components/ui/label'
 
 interface MonitorFormProps {
-  initialValues?: { name: string; url: string; interval_secs: number };
-  onSubmit: (value: {
-    name: string;
-    url: string;
-    interval_secs: number;
-  }) => void;
-  isPending: boolean;
-  submitLabel: string;
-  onCancel?: () => void;
+  initialValues?: { name: string; url: string; interval_secs: number }
+  onSubmit: (value: { name: string; url: string; interval_secs: number }) => void
+  isPending: boolean
+  submitLabel: string
+  onCancel?: () => void
 }
 
 export function MonitorForm({
@@ -23,23 +19,23 @@ export function MonitorForm({
 }: MonitorFormProps) {
   const form = useForm({
     defaultValues: {
-      name: initialValues?.name ?? "",
-      url: initialValues?.url ?? "",
+      name: initialValues?.name ?? '',
+      url: initialValues?.url ?? '',
       interval_secs: initialValues?.interval_secs ?? 60,
     },
     onSubmit: async ({ value }) => onSubmit(value),
-  });
+  })
 
   return (
     <form
       onSubmit={(event) => {
-        event.preventDefault();
-        form.handleSubmit();
+        event.preventDefault()
+        form.handleSubmit()
       }}
       className="rounded-md border border-[#2a2d3a] bg-[#1a1d27] p-4"
     >
       <h3 className="mb-4 text-lg font-medium text-slate-200">
-        {submitLabel === "Create monitor" ? "Add monitor" : "Edit monitor"}
+        {submitLabel === 'Create monitor' ? 'Add monitor' : 'Edit monitor'}
       </h3>
 
       <div className="grid gap-4 md:grid-cols-[1fr_1.5fr_120px]">
@@ -47,11 +43,7 @@ export function MonitorForm({
           name="name"
           validators={{
             onChange: ({ value }) =>
-              !value
-                ? "Name is required"
-                : value.length < 3
-                  ? "Min 3 characters"
-                  : undefined,
+              !value ? 'Name is required' : value.length < 3 ? 'Min 3 characters' : undefined,
           }}
         >
           {(field) => (
@@ -67,10 +59,7 @@ export function MonitorForm({
                 onChange={(e) => field.handleChange(e.target.value)}
                 onBlur={field.handleBlur}
               />
-              <FieldError
-                className="text-xs text-[#ef4444]"
-                errors={field.state.meta.errors}
-              />
+              <FieldError className="text-xs text-[#ef4444]" errors={field.state.meta.errors} />
             </div>
           )}
         </form.Field>
@@ -80,9 +69,9 @@ export function MonitorForm({
           validators={{
             onChange: ({ value }) =>
               !value
-                ? "URL is required"
+                ? 'URL is required'
                 : !/^https?:\/\/.+/.test(value)
-                  ? "Must be valid HTTP/HTTPS URL"
+                  ? 'Must be valid HTTP/HTTPS URL'
                   : undefined,
           }}
         >
@@ -99,10 +88,7 @@ export function MonitorForm({
                 onChange={(e) => field.handleChange(e.target.value)}
                 onBlur={field.handleBlur}
               />
-              <FieldError
-                className="text-xs text-[#ef4444]"
-                errors={field.state.meta.errors}
-              />
+              <FieldError className="text-xs text-[#ef4444]" errors={field.state.meta.errors} />
             </div>
           )}
         </form.Field>
@@ -111,11 +97,7 @@ export function MonitorForm({
           name="interval_secs"
           validators={{
             onChange: ({ value }) =>
-              !value || value < 30
-                ? "Min 30s"
-                : value > 3600
-                  ? "Max 3600s"
-                  : undefined,
+              !value || value < 30 ? 'Min 30s' : value > 3600 ? 'Max 3600s' : undefined,
           }}
         >
           {(field) => (
@@ -134,10 +116,7 @@ export function MonitorForm({
                 onChange={(e) => field.handleChange(Number(e.target.value))}
                 onBlur={field.handleBlur}
               />
-              <FieldError
-                className="text-xs text-[#ef4444]"
-                errors={field.state.meta.errors}
-              />
+              <FieldError className="text-xs text-[#ef4444]" errors={field.state.meta.errors} />
             </div>
           )}
         </form.Field>
@@ -149,7 +128,7 @@ export function MonitorForm({
           disabled={isPending}
           className="rounded-md bg-[#3b82f6] px-4 py-2 text-sm font-medium text-white hover:bg-[#2563eb] disabled:opacity-50"
         >
-          {isPending ? "Saving..." : submitLabel}
+          {isPending ? 'Saving...' : submitLabel}
         </button>
         {onCancel && (
           <button
@@ -162,5 +141,5 @@ export function MonitorForm({
         )}
       </div>
     </form>
-  );
+  )
 }

@@ -1,17 +1,45 @@
+import Cookies from 'js-cookie'
+
+const TOKEN_KEY = 'token'
+
+/**
+ * Set authentication token in cookies (client-side only)
+ */
 export const setAuth = (token: string) => {
-  localStorage.setItem('token', token)
+  if (typeof window !== 'undefined') {
+    Cookies.set(TOKEN_KEY, token, {
+      expires: 7, // 7 days
+      sameSite: 'strict',
+      secure: import.meta.env.PROD, // Only secure in production
+      path: '/',
+    })
+  }
 }
 
+/**
+ * Get authentication token from cookies (client-side only)
+ */
 export const getToken = () => {
-  return localStorage.getItem('token')
+  if (typeof window !== 'undefined') {
+    return Cookies.get(TOKEN_KEY) || null
+  }
+  return null
 }
 
+/**
+ * Remove authentication token and redirect to login
+ */
 export const logout = () => {
-  localStorage.removeItem('token')
-  window.location.href = '/login'
+  if (typeof window !== 'undefined') {
+    Cookies.remove(TOKEN_KEY, { path: '/' })
+    window.location.href = '/login'
+  }
 }
 
+/**
+ * Check if user is authenticated
+ */
 export const isAuthenticated = () => {
-  const token = localStorage.getItem('token')
+  const token = getToken()
   return token !== null && token !== undefined && token !== ''
 }

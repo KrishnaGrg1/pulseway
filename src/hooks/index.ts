@@ -1,1 +1,1 @@
-export { useMonitorStatus } from "./useMonitorStatus";
+export { useMonitorStatus } from './useMonitorStatus'

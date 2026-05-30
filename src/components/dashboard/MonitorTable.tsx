@@ -1,32 +1,27 @@
-import { ArrowUpRight, CheckCircle, MoreVertical, Trash2, Eye } from "lucide-react";
-import { Link } from "@tanstack/react-router";
-import type { Monitor } from "#/lib/types";
-import { StatusIndicator } from "./StatusIndicator";
-import { UptimeBar } from "./UptimeBar";
-import { MonitorSkeleton } from "./MonitorSkeleton";
-import { MonitorForm } from "./MonitorForm";
+import { ArrowUpRight, CheckCircle, MoreVertical, Trash2, Eye } from 'lucide-react'
+import { Link } from '@tanstack/react-router'
+import type { Monitor } from '#/lib/types'
+import { StatusIndicator } from './StatusIndicator'
+import { UptimeBar } from './UptimeBar'
+import { MonitorSkeleton } from './MonitorSkeleton'
+import { MonitorForm } from './MonitorForm'
 
 interface MonitorTableProps {
-  monitors?: Monitor[];
-  isLoading: boolean;
-  editingId: number | null;
-  setEditingId: (id: number | null) => void;
-  setShowForm: (show: boolean) => void;
-  getStatus: (monitor: Monitor) => string;
-  getUptimeHistory: (monitor: Monitor) => Array<{ status: "up" | "down" }>;
-  updateMutation: {
-    mutate: (data: {
-      id: number;
-      name: string;
-      url: string;
-      interval_secs: number;
-    }) => void;
-    isPending: boolean;
-  };
-  deleteMutation: {
-    mutate: (id: number) => void;
-    isPending: boolean;
-  };
+  monitors?: Monitor[]
+  isLoading: boolean
+  editingId: number | null
+  setEditingId: (id: number | null) => void
+  setShowForm: (show: boolean) => void
+  getStatus: (monitor: Monitor) => string
+  getUptimeHistory: (monitor: Monitor) => Array<{ status: 'up' | 'down' }>
+  updateMonitor: {
+    mutate: (data: { id: number; name: string; url: string; interval_secs: number }) => void
+    isPending: boolean
+  }
+  deleteMonitor: {
+    mutate: (id: number) => void
+    isPending: boolean
+  }
 }
 
 export function MonitorTable({
@@ -37,8 +32,8 @@ export function MonitorTable({
   setShowForm,
   getStatus,
   getUptimeHistory,
-  updateMutation,
-  deleteMutation,
+  updateMonitor,
+  deleteMonitor,
 }: MonitorTableProps) {
   return (
     <div className="rounded-md border border-[#2a2d3a] bg-[#1a1d27]">
@@ -72,7 +67,7 @@ export function MonitorTable({
       ) : (
         <>
           {/* TABLE HEADER - Desktop only */}
-          <div className="hidden grid-cols-[100px_1fr_100px_80px_100px_120px_80px] items-center gap-3 border-b border-[#2a2d3a] px-4 py-2 text-xs uppercase tracking-wide text-slate-400 lg:grid">
+          <div className="hidden grid-cols-[100px_1fr_100px_80px_100px_120px_80px] items-center gap-3 border-b border-[#2a2d3a] px-4 py-2 text-xs tracking-wide text-slate-400 uppercase lg:grid">
             <div>Status</div>
             <div>URL</div>
             <div>Uptime</div>
@@ -84,7 +79,7 @@ export function MonitorTable({
 
           {/* TABLE ROWS */}
           {monitors?.map((monitor) => {
-            const status = getStatus(monitor);
+            const status = getStatus(monitor)
             return (
               <div key={monitor.id}>
                 {/* Desktop view */}
@@ -94,9 +89,7 @@ export function MonitorTable({
                   </div>
 
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-slate-200">
-                      {monitor.name}
-                    </p>
+                    <p className="truncate text-sm font-medium text-slate-200">{monitor.name}</p>
                     <a
                       href={monitor.url}
                       target="_blank"
@@ -123,7 +116,7 @@ export function MonitorTable({
                   <div className="text-right text-xs text-slate-400">
                     {monitor.last_checked_at
                       ? new Date(monitor.last_checked_at).toLocaleTimeString()
-                      : "Never"}
+                      : 'Never'}
                   </div>
 
                   <div className="flex justify-end gap-1">
@@ -136,9 +129,7 @@ export function MonitorTable({
                     </Link>
                     <button
                       className="rounded p-1 text-slate-400 hover:bg-[#1a1d27] hover:text-slate-200"
-                      onClick={() =>
-                        setEditingId(editingId === monitor.id ? null : monitor.id)
-                      }
+                      onClick={() => setEditingId(editingId === monitor.id ? null : monitor.id)}
                     >
                       <MoreVertical className="h-4 w-4" />
                     </button>
@@ -148,8 +139,8 @@ export function MonitorTable({
                 {/* Mobile view */}
                 <div className="flex flex-col gap-3 border-b border-[#2a2d3a] p-4 hover:bg-[#0f1117] lg:hidden">
                   <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-1 flex items-center gap-2">
                         <StatusIndicator status={status} />
                         <p className="truncate text-sm font-medium text-slate-200">
                           {monitor.name}
@@ -175,9 +166,7 @@ export function MonitorTable({
                       </Link>
                       <button
                         className="rounded p-1 text-slate-400 hover:bg-[#1a1d27] hover:text-slate-200"
-                        onClick={() =>
-                          setEditingId(editingId === monitor.id ? null : monitor.id)
-                        }
+                        onClick={() => setEditingId(editingId === monitor.id ? null : monitor.id)}
                       >
                         <MoreVertical className="h-4 w-4" />
                       </button>
@@ -206,7 +195,7 @@ export function MonitorTable({
                     <div className="text-slate-400">
                       {monitor.last_checked_at
                         ? new Date(monitor.last_checked_at).toLocaleTimeString()
-                        : "Never"}
+                        : 'Never'}
                     </div>
                   </div>
                 </div>
@@ -219,17 +208,15 @@ export function MonitorTable({
                         url: monitor.url,
                         interval_secs: monitor.interval_secs,
                       }}
-                      onSubmit={(value) =>
-                        updateMutation.mutate({ id: monitor.id, ...value })
-                      }
-                      isPending={updateMutation.isPending}
+                      onSubmit={(value) => updateMonitor.mutate({ id: monitor.id, ...value })}
+                      isPending={updateMonitor.isPending}
                       submitLabel="Update monitor"
                       onCancel={() => setEditingId(null)}
                     />
                     <button
                       className="mt-3 flex items-center gap-2 text-sm text-[#ef4444] hover:underline"
-                      onClick={() => deleteMutation.mutate(monitor.id)}
-                      disabled={deleteMutation.isPending}
+                      onClick={() => deleteMonitor.mutate(monitor.id)}
+                      disabled={deleteMonitor.isPending}
                     >
                       <Trash2 className="h-4 w-4" />
                       Delete monitor
@@ -237,10 +224,10 @@ export function MonitorTable({
                   </div>
                 )}
               </div>
-            );
+            )
           })}
         </>
       )}
     </div>
-  );
+  )
 }

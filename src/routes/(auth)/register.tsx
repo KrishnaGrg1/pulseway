@@ -1,36 +1,28 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { useForm } from "@tanstack/react-form";
-import { register } from "#/lib/queries";
-import Logo from "#/components/Logo";
-import { Eye, EyeOff } from "lucide-react";
+import { createFileRoute, Link } from '@tanstack/react-router'
+import { useState } from 'react'
+import { useForm } from '@tanstack/react-form'
+import Logo from '#/components/Logo'
+import { Eye, EyeOff } from 'lucide-react'
+import { useRegister } from '#/hooks/use-auth'
 
-export const Route = createFileRoute("/(auth)/register")({
+export const Route = createFileRoute('/(auth)/register')({
   component: RegisterPage,
-});
+})
 
 function RegisterPage() {
-  const navigate = useNavigate();
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false)
 
-  const mutation = useMutation({
-    mutationFn: ({ email, password }: { email: string; password: string }) =>
-      register(email, password),
-    onSuccess: () => {
-      navigate({ to: "/login" });
-    },
-  });
+  const { mutate: register, isPending, error: registerError } = useRegister()
 
   const form = useForm({
     defaultValues: {
-      email: "",
-      password: "",
+      email: '',
+      password: '',
     },
     onSubmit: async ({ value }) => {
-      mutation.mutate(value);
+      register({ data: value })
     },
-  });
+  })
 
   return (
     <div className="auth-shell">
@@ -46,22 +38,20 @@ function RegisterPage() {
           </p>
           <div className="flex flex-col gap-3.5">
             {[
-              "30-second endpoint checks",
-              "Instant failure alerts via email",
-              "Live latency tracking via SSE",
-              "Full incident history",
+              '30-second endpoint checks',
+              'Instant failure alerts via email',
+              'Live latency tracking via SSE',
+              'Full incident history',
             ].map((f) => (
               <div key={f} className="flex items-center gap-2.5">
-                <div className="h-1.5 w-1.5 rounded-full bg-[rgba(79,184,178,0.7)] shrink-0" />
-                <span className="text-[13px] text-[rgba(231,243,236,0.65)] font-mono">
-                  {f}
-                </span>
+                <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-[rgba(79,184,178,0.7)]" />
+                <span className="font-mono text-[13px] text-[rgba(231,243,236,0.65)]">{f}</span>
               </div>
             ))}
           </div>
         </div>
 
-        <p className="text-[11px] text-[rgba(231,243,236,0.25)] font-mono">
+        <p className="font-mono text-[11px] text-[rgba(231,243,236,0.25)]">
           Free to start · no credit card
         </p>
       </div>
@@ -70,23 +60,19 @@ function RegisterPage() {
       <div className="auth-right">
         <div className="auth-form-wrap rise-in w-full max-w-[360px] px-4 sm:px-0">
           <p className="auth-form-title">Create account</p>
-          <p className="auth-form-sub">
-            Get your first monitor running in under a minute.
-          </p>
+          <p className="auth-form-sub">Get your first monitor running in under a minute.</p>
 
-          {mutation.error && (
+          {registerError && (
             <div className="error-banner">
-              {mutation.error instanceof Error
-                ? mutation.error.message
-                : "Failed to create account."}
+              {registerError instanceof Error ? registerError.message : 'Failed to create account.'}
             </div>
           )}
 
           <form
             onSubmit={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              form.handleSubmit();
+              e.preventDefault()
+              e.stopPropagation()
+              form.handleSubmit()
             }}
             className="flex flex-col gap-4"
           >
@@ -96,9 +82,9 @@ function RegisterPage() {
               validators={{
                 onChange: ({ value }) =>
                   !value
-                    ? "Email is required"
+                    ? 'Email is required'
                     : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
-                      ? "Invalid email format"
+                      ? 'Invalid email format'
                       : undefined,
               }}
             >
@@ -132,9 +118,9 @@ function RegisterPage() {
               validators={{
                 onChange: ({ value }) =>
                   !value
-                    ? "Password is required"
+                    ? 'Password is required'
                     : value.length < 6
-                      ? "Password must be at least 6 characters"
+                      ? 'Password must be at least 6 characters'
                       : undefined,
               }}
             >
@@ -147,7 +133,7 @@ function RegisterPage() {
                     <input
                       id={field.name}
                       name={field.name}
-                      type={showPassword ? "text" : "password"}
+                      type={showPassword ? 'text' : 'password'}
                       className="field"
                       value={field.state.value}
                       placeholder="••••••••"
@@ -159,11 +145,7 @@ function RegisterPage() {
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute top-1/2 right-3 -translate-y-1/2 text-[var(--text-3)] transition-colors hover:text-[var(--text-1)]"
                     >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
                   {field.state.meta.errors.length > 0 && (
@@ -179,15 +161,15 @@ function RegisterPage() {
             <button
               type="submit"
               className="btn btn-primary w-full justify-center p-[11px]"
-              disabled={mutation.isPending}
+              disabled={isPending}
             >
-              {mutation.isPending ? "Creating account…" : "Create account →"}
+              {isPending ? 'Creating account…' : 'Create account →'}
             </button>
           </form>
 
           {/* FOOTER TEXT */}
-          <p className="mt-5 text-center text-[12px] text-[var(--text-2)] font-mono">
-            Already have an account?{" "}
+          <p className="mt-5 text-center font-mono text-[12px] text-[var(--text-2)]">
+            Already have an account?{' '}
             <Link to="/login" className="underline">
               Login
             </Link>
@@ -195,5 +177,5 @@ function RegisterPage() {
         </div>
       </div>
     </div>
-  );
+  )
 }

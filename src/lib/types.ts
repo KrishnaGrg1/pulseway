@@ -22,7 +22,7 @@ export interface Monitor {
   is_active: boolean
   created_at: string
   // Enhanced fields from backend
-  current_status?: "up" | "down" | "unknown"
+  current_status?: 'up' | 'down' | 'unknown'
   uptime_percentage?: number
   avg_latency_ms?: number
   last_checked_at?: string

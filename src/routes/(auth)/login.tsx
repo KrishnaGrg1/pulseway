@@ -1,38 +1,27 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { useForm } from "@tanstack/react-form";
-import { login } from "#/lib/queries";
-import { setAuth } from "#/lib/auth";
-import Logo from "#/components/Logo";
-import { Eye, EyeOff } from "lucide-react";
+import { createFileRoute, Link } from '@tanstack/react-router'
+import { useState } from 'react'
+import { useForm } from '@tanstack/react-form'
+import Logo from '#/components/Logo'
+import { Eye, EyeOff } from 'lucide-react'
+import { useLogin } from '#/hooks/use-auth'
 
-export const Route = createFileRoute("/(auth)/login")({
+export const Route = createFileRoute('/(auth)/login')({
   component: LoginPage,
-});
+})
 
 function LoginPage() {
-  const navigate = useNavigate();
-  const [showPassword, setShowPassword] = useState(false);
-
-  const mutation = useMutation({
-    mutationFn: ({ email, password }: { email: string; password: string }) =>
-      login(email, password),
-    onSuccess: (data) => {
-      setAuth(data.token);
-      navigate({ to: "/dashboard" });
-    },
-  });
+  const [showPassword, setShowPassword] = useState(false)
+  const { mutate: login, isPending, error: loginError } = useLogin()
 
   const form = useForm({
     defaultValues: {
-      email: "",
-      password: "",
+      email: '',
+      password: '',
     },
     onSubmit: async ({ value }) => {
-      mutation.mutate(value);
+      login({ data: value })
     },
-  });
+  })
 
   return (
     <div className="auth-shell">
@@ -49,14 +38,14 @@ function LoginPage() {
 
           <div className="auth-testimonial">
             <p>
-              "We caught three outages before any user noticed them. It paid for
-              itself in week one."
+              "We caught three outages before any user noticed them. It paid for itself in week
+              one."
             </p>
             <cite>— CTO, fintech startup</cite>
           </div>
         </div>
 
-        <p className="text-[11px] font-mono text-[rgba(231,243,236,0.25)]">
+        <p className="font-mono text-[11px] text-[rgba(231,243,236,0.25)]">
           Go · PostgreSQL · Redis · RabbitMQ
         </p>
       </div>
@@ -67,19 +56,17 @@ function LoginPage() {
           <p className="auth-form-title">Welcome back</p>
           <p className="auth-form-sub">Login to your Pulseway account.</p>
 
-          {mutation.error && (
+          {loginError && (
             <div className="error-banner">
-              {mutation.error instanceof Error
-                ? mutation.error.message
-                : "Invalid email or password."}
+              {loginError instanceof Error ? loginError.message : 'Invalid email or password.'}
             </div>
           )}
 
           <form
             onSubmit={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              form.handleSubmit();
+              e.preventDefault()
+              e.stopPropagation()
+              form.handleSubmit()
             }}
             className="flex flex-col gap-4"
           >
@@ -89,9 +76,9 @@ function LoginPage() {
               validators={{
                 onChange: ({ value }) =>
                   !value
-                    ? "Email is required"
+                    ? 'Email is required'
                     : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
-                      ? "Invalid email format"
+                      ? 'Invalid email format'
                       : undefined,
               }}
             >
@@ -125,9 +112,9 @@ function LoginPage() {
               validators={{
                 onChange: ({ value }) =>
                   !value
-                    ? "Password is required"
+                    ? 'Password is required'
                     : value.length < 6
-                      ? "Password must be at least 6 characters"
+                      ? 'Password must be at least 6 characters'
                       : undefined,
               }}
             >
@@ -140,7 +127,7 @@ function LoginPage() {
                     <input
                       id={field.name}
                       name={field.name}
-                      type={showPassword ? "text" : "password"}
+                      type={showPassword ? 'text' : 'password'}
                       className="field"
                       value={field.state.value}
                       placeholder="••••••••"
@@ -152,11 +139,7 @@ function LoginPage() {
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute top-1/2 right-3 -translate-y-1/2 text-[var(--text-3)] transition-colors hover:text-[var(--text-1)]"
                     >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
                   {field.state.meta.errors.length > 0 && (
@@ -172,15 +155,15 @@ function LoginPage() {
             <button
               type="submit"
               className="btn btn-primary w-full justify-center p-[11px]"
-              disabled={mutation.isPending}
+              disabled={isPending}
             >
-              {mutation.isPending ? "Logging in…" : "Login →"}
+              {isPending ? 'Logging in…' : 'Login →'}
             </button>
           </form>
 
           {/* FOOTER TEXT */}
-          <p className="mt-5 text-center text-[12px] font-mono text-[var(--text-2)]">
-            No account?{" "}
+          <p className="mt-5 text-center font-mono text-[12px] text-[var(--text-2)]">
+            No account?{' '}
             <Link to="/register" className="underline">
               Register free
             </Link>
@@ -188,5 +171,5 @@ function LoginPage() {
         </div>
       </div>
     </div>
-  );
+  )
 }

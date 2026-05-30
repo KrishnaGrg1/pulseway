@@ -1,38 +1,39 @@
-import axios from 'axios'
-import type { APIResponse } from './types'
+import axios, { type AxiosRequestConfig, type AxiosResponse } from 'axios'
+import { getToken } from './auth'
 
-const api = axios.create({
+const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
   withCredentials: true, // Send cookies with requests
 })
 
-// Automatically attach token to every request
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token')
+axiosInstance.interceptors.response.use(
+  (response: any) => response,
+  (error) => {
+    console.error(error.response?.data?.errors)
+    const message = error?.response?.data?.message ?? (error.message || 'Something went wrong')
+    return Promise.reject(new Error(message))
+  }
+)
+
+// Automatically attach token from cookies to every request
+axiosInstance.interceptors.request.use((config) => {
+  const token = getToken()
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
   return config
 })
 
-// Redirect to login if 401
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token')
-      window.location.href = '/login'
-    }
+export const api = async <T, V>(url: string, config: AxiosRequestConfig & { data?: T } = {}) => {
+  const { headers: _, ...restConfig } = config
+  return axiosInstance.request<T, AxiosResponse<V>>({
+    url,
+    ...restConfig,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(config.headers || {}),
+    },
+  })
+}
 
-    const payload = error.response?.data as APIResponse<unknown> | undefined
-    const message =
-      payload?.error?.details ||
-      payload?.message ||
-      error.message ||
-      'Request failed'
-
-    return Promise.reject(new Error(message))
-  }
-)
-
-export default api
+export default axiosInstance

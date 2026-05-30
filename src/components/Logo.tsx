@@ -1,5 +1,5 @@
-import { Link } from "@tanstack/react-router";
-import logo from "/pulsewayfavicon.svg";
+import { Link } from '@tanstack/react-router'
+import logo from '/pulsewayfavicon.svg'
 
 export default function Logo({ compact = false }: { compact?: boolean }) {
   return (
@@ -9,5 +9,5 @@ export default function Logo({ compact = false }: { compact?: boolean }) {
         {!compact && <span className="logo-wordmark">Pulseway</span>}
       </div>
     </Link>
-  );
+  )
 }
