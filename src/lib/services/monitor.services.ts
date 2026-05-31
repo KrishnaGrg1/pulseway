@@ -9,6 +9,7 @@ import type {
   deleteMonitorResponse,
   getMonitorResponse,
   IncidentsResponse,
+  MonitorDetailsResponse,
   updateMonitorInput,
   updateMonitorResponse,
 } from '../api-types'
@@ -18,6 +19,7 @@ import {
   getAlertByMonitorIdSchema,
   getCheckHistoryByMonitorIdSchema,
   getIncidentsByMonitorIdSchema,
+  getMonitorDetailsByMonitorIdSchema,
   updateMonitorSchema,
 } from '../schema/monitor.schema'
 import { getCookie } from '@tanstack/react-start/server'
@@ -27,7 +29,7 @@ export const getMonitors = createServerFn({ method: 'GET' }).handler(async () =>
     const token = getCookie('token')
 
     if (!token) {
-      return null
+      throw new Error('Unauthorized - no token found')
     }
     const res = await api<null, getMonitorResponse>('/monitors', {
       method: 'GET',
@@ -49,7 +51,7 @@ export const createMonitor = createServerFn({ method: 'POST' })
       const token = getCookie('token')
 
       if (!token) {
-        return null
+        throw new Error('Unauthorized - no token found')
       }
       const res = await api<createMonitorInput, createMonitorResponse>('/monitors', {
         data: data,
@@ -72,7 +74,7 @@ export const deleteMonitor = createServerFn({ method: 'POST' })
       const token = getCookie('token')
 
       if (!token) {
-        return null
+        throw new Error('Unauthorized - no token found')
       }
       const res = await api<deleteMonitorInput, deleteMonitorResponse>(`/monitors/${data.id}`, {
         method: 'DELETE',
@@ -83,7 +85,7 @@ export const deleteMonitor = createServerFn({ method: 'POST' })
       return res.data
     } catch (error: unknown) {
       const err = error as Error
-      throw new Error(err.message || 'Failed to create monitor')
+      throw new Error(err.message || 'Failed to delete monitor')
     }
   })
 
@@ -94,7 +96,7 @@ export const updateMonitor = createServerFn({ method: 'POST' })
       const token = getCookie('token')
 
       if (!token) {
-        return null
+        throw new Error('Unauthorized - no token found')
       }
 
       const { id, ...payload } = data as any
@@ -119,7 +121,7 @@ export const getIncidentsByMonitorId = createServerFn({ method: 'GET' })
       const token = getCookie('token')
 
       if (!token) {
-        return null
+        throw new Error('Unauthorized - no token found')
       }
       const res = await api<null, IncidentsResponse>(`/monitors/${data.id}/incidents`, {
         method: 'GET',
@@ -141,7 +143,7 @@ export const getAlertByMonitorId = createServerFn({ method: 'GET' })
       const token = getCookie('token')
 
       if (!token) {
-        return null
+        throw new Error('Unauthorized - no token found')
       }
       const res = await api<null, AlertsResponse>(`/monitors/${data.id}/alerts`, {
         method: 'GET',
@@ -163,7 +165,7 @@ export const getCheckHistoryByMonitorId = createServerFn({ method: 'GET' })
       const token = getCookie('token')
 
       if (!token) {
-        return null
+        throw new Error('Unauthorized - no token found')
       }
       const res = await api<null, CheckHistoryResponse>(`/monitors/${data.id}/check-history`, {
         method: 'GET',
@@ -184,7 +186,7 @@ export const listAllIncidents = createServerFn({ method: 'GET' }).handler(async 
     const token = getCookie('token')
 
     if (!token) {
-      return null
+      throw new Error('Unauthorized - no token found')
     }
     const res = await api<null, IncidentsResponse>(`/incidents`, {
       method: 'GET',
@@ -198,3 +200,25 @@ export const listAllIncidents = createServerFn({ method: 'GET' }).handler(async 
     throw new Error(err.message || 'failed to fetch incidents')
   }
 })
+
+export const getMonitorDetailsByMonitorId = createServerFn({ method: 'GET' })
+  .inputValidator((data) => getMonitorDetailsByMonitorIdSchema.parse(data))
+  .handler(async ({ data }) => {
+    try {
+      const token = getCookie('token')
+
+      if (!token) {
+        throw new Error('Unauthorized - no token found')
+      }
+      const res = await api<null, MonitorDetailsResponse>(`/monitors/${data.id}/details`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      return res.data.data
+    } catch (e: unknown) {
+      const err = e as Error
+      throw new Error(err.message || 'Failed to fetch monitor details')
+    }
+  })

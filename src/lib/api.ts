@@ -9,7 +9,23 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.response.use(
   (response: any) => response,
   (error) => {
-    console.error(error.response?.data?.errors)
+    // Only log errors that aren't expected backend issues
+    const isMetricsHistoryError =
+      error.config?.url?.includes('/dashboard/metrics-history') &&
+      error.response?.data?.error?.code === 'metrics_history_error'
+
+    if (!isMetricsHistoryError) {
+      // Log unexpected errors for debugging
+      console.error('API Error:', {
+        url: error.config?.url,
+        method: error.config?.method,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        message: error.message,
+      })
+    }
+
     const message = error?.response?.data?.message ?? (error.message || 'Something went wrong')
     return Promise.reject(new Error(message))
   }

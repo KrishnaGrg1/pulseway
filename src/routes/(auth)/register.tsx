@@ -34,14 +34,14 @@ function RegisterPage() {
           <p className="auth-left-claim">
             Start monitoring
             <br />
-            in 60 seconds.
+            your services.
           </p>
           <div className="flex flex-col gap-3.5">
             {[
-              '30-second endpoint checks',
-              'Instant failure alerts via email',
-              'Live latency tracking via SSE',
-              'Full incident history',
+              'Configurable endpoint checks',
+              'Email alerts on failures',
+              'Real-time status updates',
+              'Incident history tracking',
             ].map((f) => (
               <div key={f} className="flex items-center gap-2.5">
                 <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-[rgba(79,184,178,0.7)]" />
@@ -52,7 +52,7 @@ function RegisterPage() {
         </div>
 
         <p className="font-mono text-[11px] text-[rgba(231,243,236,0.25)]">
-          Free to start · no credit card
+          Create your account to get started
         </p>
       </div>
 

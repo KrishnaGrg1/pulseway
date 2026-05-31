@@ -1,8 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useQuery } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Plus, Radio, Menu, X } from 'lucide-react'
-import { getDashboardStats, getCheckHistory, getMetricsHistory } from '#/lib/queries'
 import type { Monitor } from '#/lib/types'
 import { useMonitorStatus } from '#/hooks'
 import { MetricCard, MonitorForm, DashboardSidebar, MonitorTable } from '#/components/dashboard'
@@ -13,6 +11,7 @@ import {
   useGetMonitor,
   useupdateMonitor,
 } from '#/hooks/use-monitor'
+import { useDashboardStats, useGetMetricsHistory } from '#/hooks/use-dashboard'
 
 export const Route = createFileRoute('/dashboard/')({
   beforeLoad: async () => {
@@ -29,27 +28,16 @@ function DashboardPage() {
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [uptimeHistories, setUptimeHistories] = useState<
-    Record<number, Array<{ status: 'up' | 'down' }>>
-  >({})
 
   // Use custom hook for real-time status updates
   const { statuses: liveStatuses, isConnected } = useMonitorStatus()
 
-  const { data: monitors, isLoading } = useGetMonitor()
+  const { data: monitors, isLoading, error: monitorsError } = useGetMonitor()
 
-  const { data: stats } = useQuery({
-    queryKey: ['stats'],
-    queryFn: getDashboardStats,
-    refetchInterval: 30000,
-  })
+  const { data: stats, error: statsError } = useDashboardStats()
 
   // Fetch real metrics history (7-day trends)
-  const { data: metricsHistory } = useQuery({
-    queryKey: ['metrics-history'],
-    queryFn: () => getMetricsHistory(7),
-    refetchInterval: 60000, // Refetch every minute
-  })
+  const { data: metricsHistory, error: metricsError } = useGetMetricsHistory(7)
 
   const createMonitorMutation = useCreateMonitor()
   const { mutate: updateMonitorBase, isPending: isUpdating } = useupdateMonitor()
@@ -96,45 +84,9 @@ function DashboardPage() {
 
   const healthyCount = monitors?.filter((m) => getStatus(m) === 'up').length ?? 0
 
-  // Fetch uptime history for each monitor (30-segment uptime bar)
-  useEffect(() => {
-    if (!monitors) return
-
-    const fetchHistories = async () => {
-      const histories: typeof uptimeHistories = {}
-
-      for (const monitor of monitors) {
-        try {
-          const checks = await getCheckHistory(monitor.id, 30)
-          histories[monitor.id] = checks.map((check) => ({
-            status: check.status,
-          }))
-        } catch (error) {
-          console.error(`Failed to fetch history for monitor ${monitor.id}:`, error)
-          // Fallback to empty array - component should handle gracefully
-          histories[monitor.id] = []
-        }
-      }
-
-      setUptimeHistories(histories)
-    }
-
-    fetchHistories()
-
-    // Refetch histories every 2 minutes to keep uptime bars fresh
-    const interval = setInterval(fetchHistories, 120000)
-    return () => clearInterval(interval)
-  }, [monitors])
-
   const getUptimeHistory = (monitor: Monitor) => {
-    const history = uptimeHistories[monitor.id]
-
-    // If we have real history data, use it
-    if (history && history.length > 0) {
-      return history
-    }
-
-    // Fallback: create a placeholder based on current status
+    // Create a placeholder based on current status
+    // In a real implementation, this could fetch from a hook
     const currentStatus = getStatus(monitor)
     return Array(30).fill({
       status: currentStatus === 'up' ? ('up' as const) : ('down' as const),

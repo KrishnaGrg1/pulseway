@@ -53,6 +53,7 @@ export interface EnhancedMonitorsResponse {
 }
 
 export interface DashboardStatsResponse {
+  success: boolean
   message: string
   data: {
     total_monitors: number
@@ -86,7 +87,17 @@ export interface Alert {
   is_active: boolean
   created_at: string
 }
-
+export interface createAlertInput {
+  monitor_id: number
+  email: string
+}
+export interface CreateAlertResponse {
+  success: boolean
+  message: string
+  data: {
+    alerts: Alert
+  }
+}
 export interface AlertsResponse {
   success: boolean
   message: string
@@ -96,6 +107,7 @@ export interface AlertsResponse {
 }
 
 export interface MonitorDetailsResponse {
+  success: boolean
   message: string
   data: {
     monitor: EnhancedMonitor

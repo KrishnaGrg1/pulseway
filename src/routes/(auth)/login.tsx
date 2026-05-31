@@ -31,22 +31,35 @@ function LoginPage() {
 
         <div>
           <p className="auth-left-claim">
-            Know the moment
+            Monitor your APIs
             <br />
-            your API breaks.
+            and services.
           </p>
 
-          <div className="auth-testimonial">
-            <p>
-              "We caught three outages before any user noticed them. It paid for itself in week
-              one."
-            </p>
-            <cite>— CTO, fintech startup</cite>
+          <div className="space-y-3">
+            <div className="flex items-center gap-2.5">
+              <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-[rgba(79,184,178,0.7)]" />
+              <span className="font-mono text-[13px] text-[rgba(231,243,236,0.65)]">
+                Real-time monitoring
+              </span>
+            </div>
+            <div className="flex items-center gap-2.5">
+              <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-[rgba(79,184,178,0.7)]" />
+              <span className="font-mono text-[13px] text-[rgba(231,243,236,0.65)]">
+                Instant alerts
+              </span>
+            </div>
+            <div className="flex items-center gap-2.5">
+              <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-[rgba(79,184,178,0.7)]" />
+              <span className="font-mono text-[13px] text-[rgba(231,243,236,0.65)]">
+                Incident tracking
+              </span>
+            </div>
           </div>
         </div>
 
         <p className="font-mono text-[11px] text-[rgba(231,243,236,0.25)]">
-          Go · PostgreSQL · Redis · RabbitMQ
+          Uptime monitoring for your services
         </p>
       </div>
 

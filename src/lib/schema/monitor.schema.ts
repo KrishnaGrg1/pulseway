@@ -29,3 +29,7 @@ export const getCheckHistoryByMonitorIdSchema = z.object({
   id: z.number(),
   limit: z.number().positive(),
 })
+
+export const getMonitorDetailsByMonitorIdSchema = z.object({
+  id: z.number(),
+})

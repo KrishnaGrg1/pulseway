@@ -4,7 +4,9 @@ import {
   createMonitor,
   deleteMonitor,
   getAlertByMonitorId,
+  getCheckHistoryByMonitorId,
   getIncidentsByMonitorId,
+  getMonitorDetailsByMonitorId,
   getMonitors,
   listAllIncidents,
   updateMonitor,
@@ -82,6 +84,24 @@ export function useListAllIncidents() {
   return useQuery({
     queryKey: ['incidents'],
     queryFn: () => listAllIncidents(),
+    refetchInterval: 30000,
+  })
+}
+export function useGetMonitorDetailsByMonitorId(monitorId: number) {
+  return useQuery({
+    queryKey: ['monitor-details', monitorId],
+    queryFn: () => getMonitorDetailsByMonitorId({ data: { id: monitorId } }),
+    refetchInterval: 30000,
+  })
+}
+
+export function useCheckHistoryByMonitorId(monitorId: number, timeRange: string) {
+  return useQuery({
+    queryKey: ['check-history', monitorId, timeRange],
+    queryFn: () => {
+      const limit = timeRange === '1h' ? 120 : timeRange === '24h' ? 2880 : 20160
+      return getCheckHistoryByMonitorId({ data: { id: monitorId, limit } })
+    },
     refetchInterval: 30000,
   })
 }
